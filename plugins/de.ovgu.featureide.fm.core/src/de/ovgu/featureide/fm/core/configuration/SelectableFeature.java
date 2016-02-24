@@ -34,6 +34,7 @@ public class SelectableFeature extends TreeElement {
 	private Selection recommended = Selection.UNDEFINED;
 
 	private int recommendationValue = -1;
+	private int rank = -1;
 	private int openClauseAbsolute = -1;
 	private int openClauseRelative = -2;
 
@@ -113,6 +114,14 @@ public class SelectableFeature extends TreeElement {
 
 	public void setRecommendationValue(int recommendationValue) {
 		this.recommendationValue = recommendationValue;
+	}
+
+	public int getRank() {
+		return rank;
+	}
+
+	public void setRank(int rank) {
+		this.rank = rank;
 	}
 
 	public int getOpenClauseAbsolute() {

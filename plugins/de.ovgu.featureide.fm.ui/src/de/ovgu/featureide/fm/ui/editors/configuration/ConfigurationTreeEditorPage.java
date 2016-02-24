@@ -33,6 +33,13 @@ import static de.ovgu.featureide.fm.core.localization.StringTable.THE_GIVEN_FEAT
 import static de.ovgu.featureide.fm.core.localization.StringTable.VALID_COMMA_;
 
 import java.beans.PropertyChangeEvent;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -108,6 +115,7 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 	private static final Image IMAGE_COLLAPSE = FMUIPlugin.getDefault().getImageDescriptor("icons/collapse.gif").createImage();
 	private static final Image IMAGE_AUTOEXPAND_LEVEL = FMUIPlugin.getDefault().getImageDescriptor("icons/tree01.png").createImage();
 	private static final Image IMAGE_AUTOEXPAND_GROUP = FMUIPlugin.getDefault().getImageDescriptor("icons/tree02.png").createImage();
+	private static final Image IMAGE_RECOMMENDATION = FMUIPlugin.getDefault().getImageDescriptor("icons/question.png").createImage();
 	private static final Image IMAGE_NEXT = FMUIPlugin.getDefault().getImageDescriptor("icons/arrow_down.png").createImage();
 	private static final Image IMAGE_PREVIOUS = FMUIPlugin.getDefault().getImageDescriptor("icons/arrow_up.png").createImage();
 
@@ -132,8 +140,9 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 	protected int curGroup = 0;
 	protected int curSearchIndex = 0;
 	protected int maxGroup = 0;
-	protected boolean useGroups = true;
+	protected boolean useGroups = false;
 	protected boolean useRecommendation = true;
+	protected boolean useColoring = false;
 
 	protected Tree tree;
 
@@ -141,7 +150,9 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 
 	private Label infoLabel;
 
-	private ToolItem autoExpandLevelToolItem, autoExpandGroupToolItem;
+	private ToolItem autoExpandLevelToolItem, autoExpandGroupToolItem, nextItem, previousItem;
+	
+	private ConfigurationMatrix configurationMatrix;
 
 	public void setDirty() {
 		dirty = true;
@@ -161,6 +172,7 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 	@Override
 	public void setConfigurationEditor(IConfigurationEditor configurationEditor) {
 		this.configurationEditor = configurationEditor;
+		configurationMatrix = ((ConfigurationEditor) configurationEditor).getConfigurationMatrix();
 	}
 
 	@Override
@@ -318,7 +330,32 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 
 		new ToolItem(toolbar, SWT.SEPARATOR);
 
+		item = new ToolItem(toolbar, SWT.CHECK);
+		item.setImage(IMAGE_RECOMMENDATION);
+		item.setToolTipText("Highlight Open Clauses");
+		item.setSelection(useColoring);
+		item.addSelectionListener(new SelectionListener() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				useColoring = !useColoring;
+				((ToolItem) e.getSource()).setSelection(useColoring);
+				nextItem.setEnabled(useColoring);
+				previousItem.setEnabled(useColoring);
+				autoExpandGroupToolItem.setEnabled(useColoring);
+				if (useColoring) {
+					computeTree(false);
+				} else {
+
+				}
+			}
+
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+			}
+		});
+
 		item = new ToolItem(toolbar, SWT.PUSH);
+		nextItem = item;
 		item.setImage(IMAGE_NEXT);
 		item.setToolTipText("Show Next Open Clause");
 		item.addSelectionListener(new SelectionListener() {
@@ -336,6 +373,7 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 		});
 
 		item = new ToolItem(toolbar, SWT.PUSH);
+		previousItem = item;
 		item.setImage(IMAGE_PREVIOUS);
 		item.setToolTipText("Show Previous Open Clause");
 		item.addSelectionListener(new SelectionListener() {
@@ -374,6 +412,10 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 			public void widgetDefaultSelected(SelectionEvent e) {
 			}
 		});
+
+		nextItem.setEnabled(useColoring);
+		previousItem.setEnabled(useColoring);
+		autoExpandGroupToolItem.setEnabled(useColoring);
 
 		autoExpandLevelToolItem.addSelectionListener(new SelectionListener() {
 			@Override
@@ -508,7 +550,33 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 		dirty = false;
 	}
 
+	private final StringBuilder statisticBuilder1 = new StringBuilder();
+	private final Path statPath1 = Paths.get("");
+
+	private void addStatisticValue(StringBuilder sb, String value) {
+		sb.append(value);
+		sb.append(";");
+	}
+
+	private void saveStatisticValues(StringBuilder sb, Path p) {
+		sb.append("\n");
+		try {
+			Files.write(p, sb.toString().getBytes(Charset.forName("UTF-8")), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		sb.setLength(0);
+	}
+
 	protected void set(SelectableFeature feature, Selection selection) {
+		addStatisticValue(statisticBuilder1, Long.toString(System.currentTimeMillis()));
+		addStatisticValue(statisticBuilder1, feature.getName());
+		addStatisticValue(statisticBuilder1, feature.getManual().name());
+		addStatisticValue(statisticBuilder1, selection.name());
+		addStatisticValue(statisticBuilder1, feature.getRecommended().name());
+		addStatisticValue(statisticBuilder1, Integer.toString(feature.getRecommendationValue()));
+		addStatisticValue(statisticBuilder1, Integer.toString(feature.getRank()));
+		saveStatisticValues(statisticBuilder1, statPath1);
 		configurationEditor.getConfiguration().setManual(feature, selection);
 	}
 
@@ -713,6 +781,7 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 		if (!configurationEditor.isAutoSelectFeatures() || configurationEditor.getConfiguration().isValid()) {
 			for (SelectableFeature selectableFeature : configurationEditor.getConfiguration().getFeatures()) {
 				selectableFeature.setRecommendationValue(-1);
+				selectableFeature.setRank(-1);
 				selectableFeature.setOpenClauseAbsolute(-1);
 				selectableFeature.setOpenClauseRelative(-2);
 			}
@@ -739,6 +808,7 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 			public void run() {
 				for (SelectableFeature selectableFeature : automaticFeatureList) {
 					selectableFeature.setRecommendationValue(-1);
+					selectableFeature.setRank(-1);
 					selectableFeature.setOpenClauseAbsolute(-1);
 					selectableFeature.setOpenClauseRelative(-2);
 					final TreeItem item = itemMap.get(selectableFeature);
@@ -751,7 +821,6 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 		curGroup = 0;
 
 		if (useRecommendation) {
-			final ConfigurationMatrix configurationMatrix = ((ConfigurationEditor) configurationEditor).getConfigurationMatrix();
 			configurationMatrix.calcRec(configurationEditor.getConfiguration());
 			final double[] rec = configurationMatrix.getRec();
 			if (rec != null) {
@@ -770,6 +839,32 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 			public void jobFinished(IJob finishedJob, boolean success) {
 				final IConfigJob<List<Node>> job = ((IConfigJob<List<Node>>) finishedJob);
 				maxGroup = job.getResults().size();
+				final HashMap<Integer, List<SelectableFeature>> openClauseMap = new HashMap<>();
+
+				for (final SelectableFeature feature : manualFeatureList) {
+					switch (feature.getRecommended()) {
+					case SELECTED:
+					case UNSELECTED:
+						List<SelectableFeature> list = openClauseMap.get(feature.getOpenClauseAbsolute());
+						if (list == null) {
+							list = new ArrayList<>();
+							openClauseMap.put(feature.getOpenClauseAbsolute(), list);
+						}
+						boolean contained = false;
+						for (SelectableFeature selectableFeature : list) {
+							if (selectableFeature.getRecommendationValue() == feature.getRecommendationValue()) {
+								contained = true;
+								break;
+							}
+						}
+						if (!contained) {
+							list.add(feature);
+						}
+						break;
+					case UNDEFINED:
+						break;
+					}
+				}
 				for (final SelectableFeature feature : manualFeatureList) {
 					final TreeItem item = itemMap.get(feature);
 					if (item != null) {
@@ -780,12 +875,12 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 								case SELECTED:
 									item.setFont(treeItemSpecialFont);
 									item.setForeground(green);
-									item.setText(getValueText(feature) + feature.getName() + getGroupText(feature));
+									item.setText(getValueText(feature) + getGroupText(feature));
 									break;
 								case UNSELECTED:
 									item.setFont(treeItemSpecialFont);
 									item.setForeground(blue);
-									item.setText(getValueText(feature) + feature.getName() + getGroupText(feature));
+									item.setText(getValueText(feature) + getGroupText(feature));
 									break;
 								case UNDEFINED:
 									item.setFont(treeItemStandardFont);
@@ -816,26 +911,45 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 
 							private String getValueText(SelectableFeature feature) {
 								if (!useRecommendation) {
-									return "";
+									return feature.getName();
 								}
 								final int value = feature.getRecommendationValue();
 								final StringBuilder sb = new StringBuilder();
 
+								final int rank;
+								final List<SelectableFeature> list = openClauseMap.get(feature.getOpenClauseAbsolute());
+								if (list.size() < 2) {
+									rank = 100;
+								} else {
+									int countSmaller = 0;
+									for (final SelectableFeature oFeature : list) {
+										if (oFeature != feature) {
+											if (oFeature.getRecommendationValue() < value) {
+												countSmaller++;
+											}
+										}
+									}
+									rank = (int) ((100.0 * countSmaller) / (list.size() - 1));
+								}
+								feature.setRank(rank);
+
 								// sb.append(value);
-								if (value < 0) {
-									sb.append("_____");
-								} else if (value < 20) {
+								if (rank < 20) {
 									sb.append("+____");
-								} else if (value < 40) {
+								} else if (rank < 40) {
 									sb.append("++___ ");
-								} else if (value < 60) {
+								} else if (rank < 60) {
 									sb.append("+++__");
-								} else if (value < 80) {
+								} else if (rank < 80) {
 									sb.append("++++_");
 								} else {
 									sb.append("+++++");
 								}
 								sb.append(" ");
+								sb.append(feature.getName());
+								sb.append(" (");
+								sb.append(value);
+								sb.append(")");
 
 								return sb.toString();
 							}
@@ -913,7 +1027,10 @@ public abstract class ConfigurationTreeEditorPage extends EditorPart implements 
 				if (success) {
 					updateInfoLabel(currentDisplay);
 					autoExpand(currentDisplay);
-					configurationEditor.getConfigJobManager().startJob(computeColoring(currentDisplay));
+					if (useColoring) {
+						final IConfigJob<?> computeColoring = computeColoring(currentDisplay);
+						configurationEditor.getConfigJobManager().startJob(computeColoring);
+					}
 				}
 			}
 		});

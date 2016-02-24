@@ -35,6 +35,7 @@ import java.util.Set;
 import org.prop4j.And;
 import org.prop4j.Literal;
 import org.prop4j.Node;
+import org.prop4j.Or;
 import org.prop4j.SatSolver;
 import org.sat4j.specs.TimeoutException;
 
@@ -254,11 +255,12 @@ public class ConfigurationPropagator {
 			if (workMonitor.checkCancel()) {
 				return Collections.emptyList();
 			}
-			final Node clause = clauses[i];
+			Node clause = clauses[i];
 			literalMap.clear();
 			if (clause instanceof Literal) {
 				final Literal literal = (Literal) clause;
 				literalMap.put(literal.var, literal);
+				clause = new Or(literal);
 			} else {
 				final Node[] orLiterals = clause.getChildren();
 				for (int j = 0; j < orLiterals.length; j++) {
