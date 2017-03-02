@@ -24,7 +24,26 @@ package de.ovgu.featureide.core.fstmodel.preprocessor;
  * Definition of directive kinds.
  * 
  * @author Jens Meinicke
+ * @author Christopher Sontag
  */
 public enum FSTDirectiveCommand {
 	IF, IF_NOT, IFDEF, IFNDEF, ELIF, ELIFDEF, ELIFNDEF, ELSE, ELSE_NOT, CONDITION, DEFINE, UNDEFINE,CALL;
+	
+	/**
+	 * Checks if the command is of any IF type
+	 * @return boolean, whether the command is IF, IF_NOT, IFDEF or IFNDEF
+	 */
+	public boolean isIF() {
+		return this.equals(FSTDirectiveCommand.IF) || this.equals(FSTDirectiveCommand.IF_NOT)
+					|| this.equals(FSTDirectiveCommand.IFDEF) || this.equals(FSTDirectiveCommand.IFNDEF);
+	}
+	
+	/**
+	 * Checks if the command is of any ELSE type
+	 * @return boolean, whether the command is ELIF, ELIFDEF, ELIFNDEF, ELSE or ELSE_NOT
+	 */
+	public boolean isELSE() {
+		return this.equals(FSTDirectiveCommand.ELIF) || this.equals(FSTDirectiveCommand.ELIFDEF)
+					|| this.equals(FSTDirectiveCommand.ELIFNDEF) || this.equals(FSTDirectiveCommand.ELSE) || this.equals(FSTDirectiveCommand.ELSE_NOT);
+	}
 }

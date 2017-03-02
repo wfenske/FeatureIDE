@@ -24,6 +24,7 @@ import static de.ovgu.featureide.fm.core.localization.StringTable.ARIAL;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
@@ -57,6 +58,7 @@ import de.ovgu.featureide.core.fstmodel.FSTRole;
 import de.ovgu.featureide.core.fstmodel.RoleElement;
 import de.ovgu.featureide.core.fstmodel.preprocessor.FSTDirective;
 import de.ovgu.featureide.fm.core.FMCorePlugin;
+import de.ovgu.featureide.ui.UIPlugin;
 import de.ovgu.featureide.ui.views.collaboration.GUIDefaults;
 import de.ovgu.featureide.ui.views.collaboration.action.ShowFieldsMethodsAction;
 
@@ -153,7 +155,7 @@ public class RoleFigure extends Figure implements GUIDefaults {
 			}
 			for (int i = 0; i < properties.length; i++) {
 				selections[i] = TRUE.equals(properties[i]);
-				
+
 			}
 		} catch (CoreException e) {
 			FMCorePlugin.getDefault().logError(e);
@@ -210,7 +212,7 @@ public class RoleFigure extends Figure implements GUIDefaults {
 			setBorder(COLL_BORDER_UNSELECTED);
 		}
 		setOpaque(true);
-		
+
 		if (isFieldMethodFilterActive()) {
 			createContentForFieldMethodFilter();
 		} else {
@@ -234,16 +236,17 @@ public class RoleFigure extends Figure implements GUIDefaults {
 			int fieldCount = getCountForFieldContentCreate(tooltipContent);
 			int methodCount = getCountForMethodContentCreate(tooltipContent);
 			Object[] invariant = createInvariantContent(tooltipContent);
-			
+
 			fieldCount = getCountForFields();
 			methodCount = getCountForMethods();
-			
+
 			addLabel(new Label("Fields: " + fieldCount + " Methods: " + methodCount + " Invariants: " + ((Integer) invariant[0]) + " "));
 		} else if (role.getClassFragment().getName().startsWith("*.")) {
 			setContentForFiles(new CompartmentFigure(), tooltipContent);
-		
+
 		} else {
-			setDirectivesContent(tooltipContent, getClassName());
+			setPresenceCondition(tooltipContent, getClassName());
+			//setDirectivesContent(tooltipContent, getClassName());
 		}
 
 		contentsLayout.setConstraint(this, new Rectangle(0, 0, -1, -1));
@@ -261,11 +264,11 @@ public class RoleFigure extends Figure implements GUIDefaults {
 
 			Label label = new RoleFigureLabel(getClassName() + " ", IMAGE_CLASS, role.getClassFragment().getFullName());
 			addLabel(label);
-			
+
 			if (showInvariants()) {
 				invariant = createInvariantContent(tooltipContent);
 			}
-			
+
 			int fieldCount = getCountForFieldContentCreate(tooltipContent);
 
 			int methodCount = 0;
@@ -277,8 +280,8 @@ public class RoleFigure extends Figure implements GUIDefaults {
 				methodCount = getCountForMethodContentCreate(tooltipContent);
 			}
 
-			tooltipContent.add(new Label("Fields: " + fieldCount + " Methods: " + methodCount + " Invariants: "
-					+ ((invariant != null) ? ((Integer) invariant[0]) : 0) + " "));
+			tooltipContent.add(new Label(
+					"Fields: " + fieldCount + " Methods: " + methodCount + " Invariants: " + ((invariant != null) ? ((Integer) invariant[0]) : 0) + " "));
 
 			if (showInvariants() && invariant != null && ((Integer) invariant[0]) > 0) {
 				addToToolTip(((Integer) invariant[0]), ((CompartmentFigure) invariant[1]), tooltipContent);
@@ -300,11 +303,12 @@ public class RoleFigure extends Figure implements GUIDefaults {
 		} else if (role.getClassFragment().getName().startsWith("*.")) {
 			setContentForFiles(tooltipContent, null);
 		} else {
-			setDirectivesContent(tooltipContent, getClassName());
+			setPresenceCondition(tooltipContent, getClassName());
+			//setDirectivesContent(tooltipContent, getClassName());
 		}
 		setToolTip(tooltipContent);
 	}
-	
+
 	// creates tooltip and creates content for nested classes
 	private void createContentForInnerClasses(Figure tooltipContent) {
 
@@ -314,22 +318,22 @@ public class RoleFigure extends Figure implements GUIDefaults {
 		for (FSTClassFragment currentInnerClass : allInnerClasses) {
 
 			// create empty label
-			Label label2 = new RoleFigureLabel("","");
+			Label label2 = new RoleFigureLabel("", "");
 			addLabel(label2);
-			
+
 			// create tooltip for class
 			Label label = createNestedClassLabel(currentInnerClass);
 			tooltipContent.add(createNestedClassLabel(currentInnerClass));
-			
+
 			// create tooltip counts
 			int innerFields = 0;
 			int innerMethods = 0;
-			
-			addLabel(label);			
+
+			addLabel(label);
 			innerFields += getFieldsForInnerClass(currentInnerClass);
 			innerMethods += getMethodsForInnerClass(currentInnerClass);
-			
-			label = new Label("Fields: " + innerFields + " Methods: "+innerMethods);
+
+			label = new Label("Fields: " + innerFields + " Methods: " + innerMethods);
 			tooltipContent.add(label);
 		}
 	}
@@ -340,7 +344,7 @@ public class RoleFigure extends Figure implements GUIDefaults {
 			if (matchFilter(currentField)
 					&& ((fieldsWithRefinements() && currentField.inRefinementGroup()) || (!currentField.inRefinementGroup() && fieldsWithoutRefinements()))) {
 				{
-					
+
 					fieldCount++;
 					addLabel(createFieldLabel(currentField));
 				}
@@ -353,23 +357,21 @@ public class RoleFigure extends Figure implements GUIDefaults {
 		int methodCount = 0;
 
 		for (FSTMethod currentMethod : innerClassFragment.getMethods()) {
-			if (matchFilter(currentMethod)
-					&& ((methodsWithRefinements() && currentMethod.inRefinementGroup()) || (!currentMethod.inRefinementGroup() && methodsWithoutRefinements()))) {
-				
+			if (matchFilter(currentMethod) && ((methodsWithRefinements() && currentMethod.inRefinementGroup())
+					|| (!currentMethod.inRefinementGroup() && methodsWithoutRefinements()))) {
+
 				methodCount++;
 				addLabel(createMethodLabel(currentMethod));
 			}
 		}
 		return methodCount;
 	}
-	
-	private int getCountForMethods()
-	{
+
+	private int getCountForMethods() {
 		return role.getClassFragment().getMethods().size();
 	}
-	
-	private int getCountForFields()
-	{
+
+	private int getCountForFields() {
 		return role.getClassFragment().getFields().size();
 	}
 
@@ -485,19 +487,19 @@ public class RoleFigure extends Figure implements GUIDefaults {
 		}
 		return name;
 	}
-	
+
 	// create label for nested class
 	private Label createNestedClassLabel(FSTClassFragment classFragment) {
 		String name = classFragment.getFullIdentifier();
 		if (name.startsWith(RoleElement.DEFAULT_PACKAGE)) {
 			name = name.substring(RoleElement.DEFAULT_PACKAGE.length());
 		}
-		
+
 		RoleFigureLabel classLabel = new RoleFigureLabel(name, IMAGE_CLASS, classFragment.getFullName());
 		classLabel.setForegroundColor(ROLE_FOREGROUND_UNSELECTED);
 		return classLabel;
 	}
-	
+
 	private int getCountForFieldContentCreate(Figure tooltipContent) {
 		CompartmentFigure fieldFigure = new CompartmentFigure();
 		Label label = new Label(getClassName() + " ", IMAGE_CLASS);
@@ -602,7 +604,7 @@ public class RoleFigure extends Figure implements GUIDefaults {
 		for (FSTDirective d : role.getDirectives()) {
 			String dependencyString = d.toDependencyString();
 			if (!duplicates.contains(dependencyString)) {
-//				duplicates.add(dependencyString);
+				//duplicates.add(dependencyString);
 				Label partLabel = new RoleFigureLabel(dependencyString, IMAGE_HASH, dependencyString, d);
 				addLabel(partLabel);
 			}
@@ -610,13 +612,33 @@ public class RoleFigure extends Figure implements GUIDefaults {
 		}
 	}
 
+	private void setPresenceCondition(Figure tooltipContent, String className) {
+		LinkedList<String> duplicates = new LinkedList<String>();
+		tooltipContent.add(new Label(className + " ", IMAGE_CLASS));
+		tooltipContent.add(new Label(role.getFeature() + " ", IMAGE_FEATURE));
+		this.setToolTip(tooltipContent);
+		
+		for (FSTDirective d : role.getDirectives()) {
+			String presenceCondition = d.getPresenceCondition(role);
+			
+			if (!duplicates.contains(presenceCondition)) {
+				duplicates.add(presenceCondition);
+				Label partLabel = new RoleFigureLabel(presenceCondition, IMAGE_HASH, presenceCondition);
+				addLabel(partLabel);
+			}
+		}
+
+	}
+
 	/**
 	 * 
 	 * @return <code>true</code> if methods and field should be displayed directly at the figure.
 	 */
 	public boolean isFieldMethodFilterActive() {
-		return (isPublicFieldMethodFilterActive() || isDefaultFieldMethodFilterActive() || isPrivateFieldMethodFilterActive() || isProtectedFieldMethodFilterActive())
-				&& (fieldsWithRefinements() || fieldsWithoutRefinements() || showContracts() || showInvariants() || methodsWithoutRefinements() || methodsWithRefinements());
+		return (isPublicFieldMethodFilterActive() || isDefaultFieldMethodFilterActive() || isPrivateFieldMethodFilterActive()
+				|| isProtectedFieldMethodFilterActive())
+				&& (fieldsWithRefinements() || fieldsWithoutRefinements() || showContracts() || showInvariants() || methodsWithoutRefinements()
+						|| methodsWithRefinements());
 	}
 
 	/*
@@ -679,8 +701,8 @@ public class RoleFigure extends Figure implements GUIDefaults {
 	private boolean matchFilter(FSTMethod m) {
 		return ((m.isPrivate() && isPrivateFieldMethodFilterActive()) || (m.isProtected() && isProtectedFieldMethodFilterActive())
 				|| (m.isPublic() && isPublicFieldMethodFilterActive())
-				|| (!m.isPrivate() && !m.isProtected() && !m.isPublic() && isDefaultFieldMethodFilterActive()) || (!isFieldMethodFilterActive()) || (m
-				.hasContract() && showContracts()));
+				|| (!m.isPrivate() && !m.isProtected() && !m.isPublic() && isDefaultFieldMethodFilterActive()) || (!isFieldMethodFilterActive())
+				|| (m.hasContract() && showContracts()));
 	}
 
 	// create label for method

@@ -27,6 +27,8 @@ import java.util.List;
 import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
+import de.ovgu.featureide.core.CorePlugin;
+import de.ovgu.featureide.core.fstmodel.FSTModel;
 import de.ovgu.featureide.core.fstmodel.FSTRole;
 import de.ovgu.featureide.core.fstmodel.RoleElement;
 import de.ovgu.featureide.core.signature.base.AbstractSignature;
@@ -58,7 +60,7 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 	}
 
 	public FSTDirective() {
-		super("","","");
+		super("", "", "");
 	}
 
 	public void setCommand(FSTDirectiveCommand command) {
@@ -77,6 +79,14 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 		this.expression = expression;
 	}
 
+	public String getPresenceCondition(FSTRole role) {
+		return (parent != null) ? parent.getPresenceCondition(role, this) : toPresenceConditionString(true, role, this);
+	}
+
+	public String getPresenceCondition(FSTRole role, FSTDirective reference) {
+		return (parent != null) ? parent.getPresenceCondition(role) : toPresenceConditionString(true, role, reference);
+	}
+
 	public boolean hasChildren() {
 		return !children.isEmpty();
 	}
@@ -86,17 +96,16 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 	 */
 	public FSTDirective[] getChildren() {
 		FSTDirective[] elements = new FSTDirective[children.size()];
-		for(int i=0; i < children.size();i++){
+		for (int i = 0; i < children.size(); i++) {
 			elements[i] = children.get(i);
 		}
 		return elements;
 	}
-	
+
 	@Nonnull
 	public LinkedList<FSTDirective> getChildrenList() {
 		return children;
 	}
-
 
 	/**
 	 * @param children the children to set
@@ -107,7 +116,7 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 		}
 		this.children = children;
 	}
-	
+
 	public void addChild(FSTDirective child) {
 		child.setParent(this);
 		children.add(child);
@@ -122,27 +131,29 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 
 	/**
 	 * Returns a representation of the directive with its parents and children.
+	 * 
 	 * @return
 	 */
 	public String toDependencyString() {
 		return (parent != null) ? parent.toDependencyString() : toString(0);
 	}
-	
+
 	/**
 	 * This is just a auxiliary function for <code>toDependencyString()</code>
+	 * 
 	 * @param i The count of parents
 	 * @return
 	 */
 	private String toString(int i) {
 		StringBuilder ret = new StringBuilder();
-		for (int j = i;j > 0;j--) {
+		for (int j = i; j > 0; j--) {
 			ret.append("     ");
 		}
 		ret.append(interpretCommand(command));
 		ret.append(" ");
 		ret.append(expression);
 		if (children.size() > 0) {
-			for(FSTDirective child : children) {
+			for (FSTDirective child : children) {
 				ret.append("\n");
 				if (child.toString().startsWith("el")) {
 					ret.append(child.toString(i));
@@ -158,31 +169,128 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 	public String toString() {
 		return interpretCommand(command) + ' ' + expression;
 	}
-	
+
+	/**
+	 * Forms a presence condition from a role and a reference directive
+	 * 
+	 * @param first - when you call it set to true the first time
+	 * @param role - the role to be formed to presence condition
+	 * @param reference - reference to the called directive 
+	 * @return string with presence condition
+	 */
+	private String toPresenceConditionString(boolean first, FSTRole role, FSTDirective reference) {
+		StringBuilder ret = new StringBuilder();
+
+		if (!(first && command.isIF()))
+			ret.append(interpretCommandAsPresenceCondition(first, command, expression.contains(role.getFeature().getName())));
+		else if (first && !expression.contains(role.getFeature().getName()) && !(command.isIF() && reference.command.isIF()))
+			ret.append(" \u00AC ");
+
+		ret.append(" ");
+		ret.append(expression);
+		ret.append("\n");
+
+		for (FSTDirective child : children) {
+			boolean isChild = child.children.isEmpty() ? false : hasChildDirectiveWithName(child.getChildrenList(), role.getFeature().getName());
+			if (!child.command.isIF() || (child.command.equals(command) && (child.expression.contains(role.getFeature().getName()) || isChild))) {
+
+				if (child.getCommand() != FSTDirectiveCommand.ELSE)
+					ret.append(child.toPresenceConditionString(false, role, reference));
+			}
+		}
+
+		return ret.toString();
+	}
+
+	/**
+	 * Checks whether a child contains the given name
+	 * 
+	 * @param directives - directives
+	 * @param name - name
+	 * @return boolean, whether a child has the name
+	 */
+	public boolean hasChildDirectiveWithName(List<FSTDirective> directives, String name) {
+		for (FSTDirective d : directives) {
+			if (d.getExpression().contains(name))
+				return true;
+		}
+		return false;
+	}
+
 	private String interpretCommand(FSTDirectiveCommand command) {
 		switch (command) {
-			case IF: return "if";
-			case IF_NOT: return "if not";
-			case IFDEF: return "ifdef";
-			case IFNDEF: return "ifndef";
-			case ELIF: return "elif";
-			case ELIFDEF: return "elifdef";
-			case ELIFNDEF: return "elifndef";
-			case ELSE:
-			case ELSE_NOT: return "else";
-			case CONDITION: return "condition";
-			case DEFINE: return "define";
-			case CALL: return "call";
-			case UNDEFINE: return "undefine";
-			default: return "";
-			
+		case IF:
+			return "if";
+		case IF_NOT:
+			return "if not";
+		case IFDEF:
+			return "ifdef";
+		case IFNDEF:
+			return "ifndef";
+		case ELIF:
+			return "elif";
+		case ELIFDEF:
+			return "elifdef";
+		case ELIFNDEF:
+			return "elifndef";
+		case ELSE:
+		case ELSE_NOT:
+			return "else";
+		case CONDITION:
+			return "condition";
+		case DEFINE:
+			return "define";
+		case CALL:
+			return "call";
+		case UNDEFINE:
+			return "undefine";
+		default:
+			return "";
+
+		}
+	}
+
+	private String interpretCommandAsPresenceCondition(boolean first, FSTDirectiveCommand command, boolean isRole) {
+		switch (command) {
+		case ELIF:
+		case ELIFDEF:
+		case ELSE:
+			if (first)
+				if (isRole)
+					return "";
+				else
+					return "\u00AC ";
+			else if (isRole)
+				return " \u2227 ";
+			else
+				return "\u2227 \u00AC ";
+		case ELSE_NOT:
+		case ELIFNDEF:
+			return " \u2227 ";
+		case IF_NOT:
+		case IFNDEF:
+			return "\u00AC";
+		case IF:
+		case IFDEF:
+		case DEFINE:
+		case CONDITION:
+			if (first)
+				if (isRole)
+					return "";
+				else
+					return "\u00AC ";
+			else if (isRole)
+				return " \u2227 ";
+			else
+				return "\u2227 \u00AC ";
+		default:
+			return "";
 		}
 	}
 
 	public int getColor() {
 		FSTRole role2 = getRole();
-		return (role2 != null && role2.getFeature() != null)
-			? role2.getFeature().getColor()	: -1;
+		return (role2 != null && role2.getFeature() != null) ? role2.getFeature().getColor() : -1;
 	}
 
 	public int getStartLine() {
@@ -216,7 +324,7 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 	}
 
 	public FSTRole getRole() {
-		return (role == null && parent != null)	? parent.getRole() : role;
+		return (role == null && parent != null) ? parent.getRole() : role;
 	}
 
 	public List<String> getFeatureNames() {
@@ -232,7 +340,7 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 		fN.add(featureName);
 		this.featureNames = fN;
 	}
-	
+
 	public int getId() {
 		return id;
 	}
@@ -244,7 +352,7 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 	public String getFullName() {
 		return this.toDependencyString();
 	}
-	
+
 	/* 
 	 * special implementation for FSTDirective by proving linenumbers 
 	 **/
@@ -257,15 +365,14 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 			return this.getStartLine() > element.getStartLine() ? 1 : -1;
 		}
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (obj == this) {
 			return true;
 		}
 		if (obj instanceof FSTDirective) {
-			if (((FSTDirective) obj).getStartLine() == getStartLine() && 
-				((FSTDirective) obj).getEndLine() == getEndLine()) {
+			if (((FSTDirective) obj).getStartLine() == getStartLine() && ((FSTDirective) obj).getEndLine() == getEndLine()) {
 				return super.equals(obj);
 			}
 		}
@@ -273,40 +380,39 @@ public class FSTDirective extends RoleElement<FSTDirective> {
 	}
 
 	public void addSig_insideOf(AbstractSignature next) {
-		if(insideOfSig == null){
+		if (insideOfSig == null) {
 			insideOfSig = new ArrayList<AbstractSignature>();
 		}
 		insideOfSig.add(next);
 	}
-	
-	
+
 	public List<AbstractSignature> getInsideOfSig() {
 		return insideOfSig;
 	}
 
 	public void addSig_included(AbstractSignature next) {
-		if(includedSig == null){
+		if (includedSig == null) {
 			includedSig = new ArrayList<AbstractSignature>();
 		}
 		includedSig.add(next);
 	}
 
 	public List<AbstractSignature> getIncludedSig() {
-		if(includedSig == null){
+		if (includedSig == null) {
 			return new ArrayList<>();
 		}
 		return includedSig;
 	}
-	
+
 	public RoleElement<?>[] getRoleElementChildren() {
 		RoleElement<?>[] elements = new RoleElement<?>[roleChildren.size()];
-		
-		for(int i=0; i < roleChildren.size();i++){
+
+		for (int i = 0; i < roleChildren.size(); i++) {
 			elements[i] = roleChildren.get(i);
 		}
 		return elements;
 	}
-	
+
 	public void addChild(RoleElement<?> child) {
 		child.setParent(this);
 		roleChildren.add(child);
