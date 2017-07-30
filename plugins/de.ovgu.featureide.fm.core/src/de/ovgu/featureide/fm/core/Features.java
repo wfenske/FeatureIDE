@@ -99,7 +99,7 @@ public final class Features {
 		for (IFeature feature : features) {
 			commonAncestorList = Features.getCommonAncestor(commonAncestorList, FeatureUtils.getParent(feature));
 		}
-		return commonAncestorList;
+		return commonAncestorList.get(commonAncestorList.size() - 1);
 	}
 
 	public static List<Feature> getCommonAncestors(Collection<Feature> features) {

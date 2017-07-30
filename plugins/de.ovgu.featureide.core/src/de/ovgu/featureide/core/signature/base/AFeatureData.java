@@ -1,5 +1,5 @@
 /* FeatureIDE - A Framework for Feature-Oriented Software Development
- * Copyright (C) 2005-2017  FeatureIDE team, University of Magdeburg, Germany
+ * Copyright (C) 2005-2015  FeatureIDE team, University of Magdeburg, Germany
  *
  * This file is part of FeatureIDE.
  * 
@@ -23,14 +23,15 @@ package de.ovgu.featureide.core.signature.base;
 import org.prop4j.Node;
 
 /**
- * Stores information about a {@link AbstractSignature} in a certain feature.</br>
- * An instance of this class is stored in a signature instance for every feature that implements the signature.
+ * TODO description
  * 
  * @author Sebastian Krieter
  */
 public abstract class AFeatureData implements IConstrainedObject {
-	protected final SignaturePosition sigPosition;
-
+	
+	protected final int startLineNumber, endLineNumber;
+	
+	protected final SignaturePosition sigPosition = null;
 
 	protected final int id;
 
@@ -40,17 +41,18 @@ public abstract class AFeatureData implements IConstrainedObject {
 	
 	protected String absolutePathToFile;
 	
-	protected AFeatureData(int id, SignaturePosition sigPosition) {
-		this.sigPosition = sigPosition;
+	protected AFeatureData(int id, int lineNumber, int endLineNumber) {
+		this.startLineNumber = lineNumber;
+		this.endLineNumber = endLineNumber;
 		this.id = id;
 	}
 
 	public int getStartLineNumber() {
-		return sigPosition.getStartRow();
+		return startLineNumber;
 	}
 
 	public int getEndLineNumber() {
-		return sigPosition.getEndRow();
+		return endLineNumber;
 	}
 
 	public Node getConstraint() {

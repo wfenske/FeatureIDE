@@ -1,5 +1,5 @@
 /* FeatureIDE - A Framework for Feature-Oriented Software Development
- * Copyright (C) 2005-2017  FeatureIDE team, University of Magdeburg, Germany
+ * Copyright (C) 2005-2015  FeatureIDE team, University of Magdeburg, Germany
  *
  * This file is part of FeatureIDE.
  * 
@@ -26,7 +26,7 @@ import org.prop4j.Node;
 import de.ovgu.featureide.core.signature.ProjectSignatures;
 
 /**
- * Creates new {@link AFeatureData} objects.
+ * TODO description
  * 
  * @author Sebastian Krieter
  */
@@ -44,19 +44,19 @@ public class FeatureDataConstructor {
 		this.dataType = dataType;
 	}
 	
-	public AFeatureData create(Node constraint, SignaturePosition position) {
+	public AFeatureData create(Node constraint, int startLineNumber, int endLineNumber) {
 		final AFeatureData data;
 		switch (dataType) {
 		case TYPE_FOP:
 			if (constraint instanceof Literal) {
-				data = new FOPFeatureData(sigs.getFeatureID(((Literal) constraint).var.toString()), position);
+				data = new FOPFeatureData(sigs.getFeatureID(((Literal) constraint).var.toString()), startLineNumber, endLineNumber);
 			} else {
-				data = new FOPFeatureData(-1, position);
+				data = new FOPFeatureData(-1, startLineNumber, endLineNumber);
 			}
 			data.setConstraint(constraint);
 			break;
 		case TYPE_PP:
-			data = new PreprocessorFeatureData(position);
+			data = new PreprocessorFeatureData(startLineNumber, endLineNumber);
 			data.setConstraint(constraint);
 			break;
 		default:
@@ -65,15 +65,15 @@ public class FeatureDataConstructor {
 		return data;
 	}
 	
-	public AFeatureData create(int id, SignaturePosition position) {
+	public AFeatureData create(int id, int startLineNumber, int endLineNumber) {
 		final AFeatureData data;
 		switch (dataType) {
 		case TYPE_FOP:
-			data = new FOPFeatureData(id, position);
+			data = new FOPFeatureData(id, startLineNumber, endLineNumber);
 			data.setConstraint(new Literal(sigs.getFeatureName(id)));
 			break;
 		case TYPE_PP:
-			data = new PreprocessorFeatureData(position);
+			data = new PreprocessorFeatureData(startLineNumber, endLineNumber);
 			data.setConstraint(new Literal(sigs.getFeatureName(id)));
 			break;
 		default:
