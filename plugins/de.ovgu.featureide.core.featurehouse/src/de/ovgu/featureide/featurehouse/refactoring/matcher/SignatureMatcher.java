@@ -2,17 +2,17 @@
  * Copyright (C) 2005-2015  FeatureIDE team, University of Magdeburg, Germany
  *
  * This file is part of FeatureIDE.
- * 
+ *
  * FeatureIDE is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * FeatureIDE is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with FeatureIDE.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -30,11 +30,12 @@ import de.ovgu.featureide.core.signature.ProjectSignatures.SignatureIterator;
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 import de.ovgu.featureide.core.signature.base.AbstractSignature;
 import de.ovgu.featureide.featurehouse.refactoring.RefactoringUtil;
-import de.ovgu.featureide.featurehouse.signature.fuji.FujiLocalVariableSignature;
+import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseLocalVariableSignature;
+//import de.ovgu.featureide.featurehouse.signature.fuji.FujiLocalVariableSignature;
 
 /**
  * TODO description
- * 
+ *
  * @author steffen
  * @param <T>
  */
@@ -69,20 +70,24 @@ public abstract class SignatureMatcher {
 	protected abstract Set<AbstractSignature> determineMatchedSignatures();
 
 	private AbstractSignature selectSignature() {
-		if (selectedElement instanceof FujiLocalVariableSignature) return selectedElement;
+		if (selectedElement instanceof FeatureHouseLocalVariableSignature) {
+			return selectedElement;
+		}
 
 		if (matchedSignatures.size() == 1) {
 			return matchedSignatures.iterator().next();
 		} else {
-			for (AbstractSignature matchedSignature : matchedSignatures) {
-				if (matchedSignature.equals(selectedElement)) return matchedSignature;
+			for (final AbstractSignature matchedSignature : matchedSignatures) {
+				if (matchedSignature.equals(selectedElement)) {
+					return matchedSignature;
+				}
 			}
 		}
 		return null;
 	}
 
 	protected Set<AbstractSignature> getNamedMatchedSignatures(final String name) {
-		Set<AbstractSignature> matched = new HashSet<>();
+		final Set<AbstractSignature> matched = new HashSet<>();
 		final SignatureIterator iter = signatures.iterator();
 		while (iter.hasNext()) {
 			final AbstractSignature signature = iter.next();
@@ -121,7 +126,7 @@ public abstract class SignatureMatcher {
 //		}
 //		return result;
 //	}
-//	
+//
 //	/**
 //	 * Finds the method that is overridden by the given method.
 //	 * First the super class is examined and then the implemented interfaces.
@@ -182,7 +187,7 @@ public abstract class SignatureMatcher {
 //		final HashSet<String> extendList = type.getExtendList();
 //		if (extendList.size() == 1)
 //			return classes.get(extendList.iterator().next());
-//		
+//
 //		return null;
 //	}
 //
@@ -227,7 +232,7 @@ public abstract class SignatureMatcher {
 //	public AbstractMethodSignature findOverriddenMethodInType(AbstractClassSignature superClass, AbstractMethodSignature overriding) {
 //		if (overriding.isPrivate() || overriding.isStatic() || overriding.isConstructor())
 //			return null;
-//		
+//
 //		final Set<AbstractMethodSignature> overriddenMethods= superClass.getMethods();
 //		for (AbstractMethodSignature overridden : overriddenMethods) {
 //			if (overridden.isPrivate() || overridden.isStatic() || overridden.isConstructor())
@@ -238,7 +243,7 @@ public abstract class SignatureMatcher {
 //		}
 //		return null;
 //	}
-//	
+//
 //	/**
 //	 * Locates the topmost method of an override ripple and returns it. If none
 //	 * is found, null is returned.
@@ -262,7 +267,7 @@ public abstract class SignatureMatcher {
 ////			if (inInterface != null && !inInterface.equals(method))
 ////				topmostMethod= inInterface;
 ////		}
-////		
+////
 //		if (topmostMethod == null) {
 //			AbstractMethodSignature overrides= overridesAnotherMethod(method);
 //			if (overrides != null && !overrides.equals(method))
@@ -270,7 +275,7 @@ public abstract class SignatureMatcher {
 //		}
 //		return topmostMethod;
 //	}
-//	
+//
 //	public AbstractMethodSignature overridesAnotherMethod(final AbstractMethodSignature method) throws JavaModelException {
 //		AbstractMethodSignature found = findDeclaringMethod(method);
 //		boolean overrides= (found != null && !found.equals(method) && (!found.isStatic()) && (!found.isPrivate()));
@@ -283,8 +288,8 @@ public abstract class SignatureMatcher {
 ////	public AbstractMethodSignature isDeclaredInInterface(AbstractMethodSignature method) throws JavaModelException {
 ////		//Assert.isTrue(isVirtual(method));
 ////		for (AbstractSignature matchedSignature : matchedSignatures) {
-////			
-////		} 
+////
+////		}
 ////			for (int i= 0; i < classes.length; i++) {
 ////				final IType clazz= classes[i];
 ////				IType[] superinterfaces= null;

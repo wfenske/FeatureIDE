@@ -2,17 +2,17 @@
  * Copyright (C) 2005-2015  FeatureIDE team, University of Magdeburg, Germany
  *
  * This file is part of FeatureIDE.
- * 
+ *
  * FeatureIDE is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * FeatureIDE is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with FeatureIDE.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -37,17 +37,18 @@ import de.ovgu.featureide.core.signature.base.AFeatureData;
 import de.ovgu.featureide.core.signature.base.AbstractMethodSignature;
 import de.ovgu.featureide.core.signature.base.AbstractSignature;
 import de.ovgu.featureide.featurehouse.refactoring.matcher.SignatureMatcher;
-import de.ovgu.featureide.featurehouse.signature.fuji.FujiLocalVariableSignature;
+import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseLocalVariableSignature;
+//import de.ovgu.featureide.featurehouse.signature.fuji.FujiLocalVariableSignature;
 
 /**
  * TODO description
- * 
+ *
  * @author Steffen Schulze
  */
 @SuppressWarnings("restriction")
-public class RenameLocalVariableRefactoring extends RenameRefactoring<FujiLocalVariableSignature> {
+public class RenameLocalVariableRefactoring extends RenameRefactoring<FeatureHouseLocalVariableSignature> {
 
-	public RenameLocalVariableRefactoring(FujiLocalVariableSignature selection, IFeatureProject featureProject, String file) {
+	public RenameLocalVariableRefactoring(FeatureHouseLocalVariableSignature selection, IFeatureProject featureProject, String file) {
 		super(selection, featureProject, file);
 	}
 
@@ -60,24 +61,28 @@ public class RenameLocalVariableRefactoring extends RenameRefactoring<FujiLocalV
 	protected void checkPreConditions(final SignatureMatcher matcher, final RefactoringStatus refactoringStatus) throws JavaModelException, CoreException {
 
 		super.checkPreConditions(matcher, refactoringStatus);
-		if (refactoringStatus.hasFatalError()) return;
+		if (refactoringStatus.hasFatalError()) {
+			return;
+		}
 
 		refactoringStatus.merge(checkNameCollision(matcher));
 	}
 
 	private RefactoringStatus checkNameCollision(SignatureMatcher matcher) {
 
-		RefactoringStatus status = new RefactoringStatus();
+		final RefactoringStatus status = new RefactoringStatus();
 
 		final AbstractMethodSignature declaringMethod = renamingElement.getDeclaringMethod();
-		for (AbstractSignature newMatchedSignature : matcher.getMatchedSignaturesForNewName()) {
+		for (final AbstractSignature newMatchedSignature : matcher.getMatchedSignaturesForNewName()) {
 
-			if (!(newMatchedSignature instanceof FujiLocalVariableSignature)) continue;
+			if (!(newMatchedSignature instanceof FeatureHouseLocalVariableSignature)) {
+				continue;
+			}
 
-			for (AFeatureData featureData : newMatchedSignature.getFeatureData()) {
+			for (final AFeatureData featureData : newMatchedSignature.getFeatureData()) {
 
 				if ((featureData.getAbsoluteFilePath().equals(file) || declaringMethod.isConstructor())
-					&& declaringMethod.equals(((FujiLocalVariableSignature) newMatchedSignature).getDeclaringMethod())) {
+					&& declaringMethod.equals(((FeatureHouseLocalVariableSignature) newMatchedSignature).getDeclaringMethod())) {
 					status.addError(
 							Messages.format(RefactoringCoreMessages.RefactoringAnalyzeUtil_name_collision, BasicElementLabels.getJavaElementName(newName)));
 				}
@@ -89,9 +94,11 @@ public class RenameLocalVariableRefactoring extends RenameRefactoring<FujiLocalV
 	@Override
 	public RefactoringStatus checkNewElementName(String newName) throws CoreException {
 		Assert.isNotNull(newName, "new name"); //$NON-NLS-1$
-		RefactoringStatus result = Checks.checkName(newName, validateFieldName(newName));
+		final RefactoringStatus result = Checks.checkName(newName, validateFieldName(newName));
 
-		if (!Checks.startsWithLowerCase(newName)) result.addWarning(RefactoringCoreMessages.RenameTempRefactoring_lowercase);
+		if (!Checks.startsWithLowerCase(newName)) {
+			result.addWarning(RefactoringCoreMessages.RenameTempRefactoring_lowercase);
+		}
 
 		return result;
 	}
@@ -104,7 +111,7 @@ public class RenameLocalVariableRefactoring extends RenameRefactoring<FujiLocalV
 	 * @see JavaConventions#validateFieldName(String, String, String)
 	 */
 	private IStatus validateFieldName(String name) {
-		String[] sourceComplianceLevels = getSourceComplianceLevels();
+		final String[] sourceComplianceLevels = getSourceComplianceLevels();
 		return JavaConventions.validateFieldName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
 	}
 

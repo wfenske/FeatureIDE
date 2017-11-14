@@ -24,6 +24,7 @@ import AST.Program;
 import de.ovgu.featureide.core.IFeatureProject;
 import de.ovgu.featureide.core.fstmodel.FSTModel;
 import de.ovgu.featureide.core.signature.ProjectSignatures;
+import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseSignatureBuilder;
 
 /**
  * Can be run after fuji type checking to attach {@link ProjectSignatures} to an {@link FSTModel}.
@@ -32,7 +33,7 @@ import de.ovgu.featureide.core.signature.ProjectSignatures;
  */
 public class SignatureSetter {
 
-	private final FujiSignaturesCreator sigCreator = new FujiSignaturesCreator();
+//	private final FujiSignaturesCreator sigCreator = new FujiSignaturesCreator();
 
 	private FSTModel fstModel = null;
 	private ProjectSignatures signatures = null;
@@ -47,7 +48,8 @@ public class SignatureSetter {
 	}
 
 	public void setFujiParameters(IFeatureProject fp, Program ast) {
-		final ProjectSignatures sigs = sigCreator.createSignatures(fp, ast);
+//		final ProjectSignatures sigs = sigCreator.createSignatures(fp, ast);
+		final ProjectSignatures sigs = FeatureHouseSignatureBuilder.build(fp);
 		synchronized (this) {
 			signatures = sigs;
 			if (fstModel != null) {
@@ -57,7 +59,7 @@ public class SignatureSetter {
 	}
 
 	private void assignSignatures() {
-		sigCreator.attachJavadocComments(signatures, fstModel);
+//		sigCreator.attachJavadocComments(signatures, fstModel);
 		fstModel.setProjectSignatures(signatures);
 	}
 }

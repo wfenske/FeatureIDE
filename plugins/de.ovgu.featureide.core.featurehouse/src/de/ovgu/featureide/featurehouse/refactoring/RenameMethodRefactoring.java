@@ -2,17 +2,17 @@
  * Copyright (C) 2005-2015  FeatureIDE team, University of Magdeburg, Germany
  *
  * This file is part of FeatureIDE.
- * 
+ *
  * FeatureIDE is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * FeatureIDE is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with FeatureIDE.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -45,17 +45,18 @@ import de.ovgu.featureide.core.signature.base.AbstractSignature;
 import de.ovgu.featureide.core.signature.base.FOPFeatureData;
 import de.ovgu.featureide.featurehouse.refactoring.matcher.MethodSignatureMatcher;
 import de.ovgu.featureide.featurehouse.refactoring.matcher.SignatureMatcher;
-import de.ovgu.featureide.featurehouse.signature.fuji.FujiMethodSignature;
+import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseMethodSignature;
+//import de.ovgu.featureide.featurehouse.signature.fuji.FujiMethodSignature;
 
 /**
  * TODO description
- * 
+ *
  * @author Steffen Schulze
  */
 @SuppressWarnings("restriction")
-public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignature> {
+public class RenameMethodRefactoring extends RenameRefactoring<FeatureHouseMethodSignature> {
 
-	public RenameMethodRefactoring(FujiMethodSignature method, IFeatureProject featureProject, String file) {
+	public RenameMethodRefactoring(FeatureHouseMethodSignature method, IFeatureProject featureProject, String file) {
 		super(method, featureProject, file);
 	}
 
@@ -68,7 +69,9 @@ public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignatu
 	protected void checkPreConditions(final SignatureMatcher matcher, final RefactoringStatus refactoringStatus) throws JavaModelException, CoreException {
 
 		super.checkPreConditions(matcher, refactoringStatus);
-		if (refactoringStatus.hasFatalError()) return;
+		if (refactoringStatus.hasFatalError()) {
+			return;
+		}
 
 //		pm.setTaskName(RefactoringCoreMessages.RenameMethodRefactoring_taskName_checkingPreconditions);
 
@@ -77,56 +80,68 @@ public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignatu
 //		boolean isInterface =  declaring.getType().equals(ExtendedFujiSignaturesJob.TYPE_INTERFACE);
 //		if (isInterface && isSpecialCase()) {
 //			refactoringStatus.addError(RefactoringCoreMessages.RenameMethodInInterfaceRefactoring_special_case);
-//		} 
+//		}
 
 //		AbstractMethodSignature topmost = matcher.findDeclaringMethod((FujiMethodSignature)matcher.getSelectedSignature());
 
-		Set<FujiMethodSignature> result = new HashSet<>();
-		for (AbstractSignature matchedSignature : matcher.getMatchedSignatures()) {
+		final Set<FeatureHouseMethodSignature> result = new HashSet<>();
+		for (final AbstractSignature matchedSignature : matcher.getMatchedSignatures()) {
 
-			if (!(matchedSignature instanceof FujiMethodSignature)) continue;
+			if (!(matchedSignature instanceof FeatureHouseMethodSignature)) {
+				continue;
+			}
 
-			final FujiMethodSignature methodSignature = (FujiMethodSignature) matchedSignature;
+			final FeatureHouseMethodSignature methodSignature = (FeatureHouseMethodSignature) matchedSignature;
 
-			Set<AbstractClassSignature> superclasses = new HashSet<>();
-			Set<AbstractClassSignature> subclasses = new HashSet<>();
+			final Set<AbstractClassSignature> superclasses = new HashSet<>();
+			final Set<AbstractClassSignature> subclasses = new HashSet<>();
 			((MethodSignatureMatcher) matcher).addSubClasses(subclasses, matchedSignature.getParent());
 			((MethodSignatureMatcher) matcher).addSuperClasses(superclasses, matchedSignature.getParent());
 
-			Set<AbstractClassSignature> allClasses = new HashSet<>();
+			final Set<AbstractClassSignature> allClasses = new HashSet<>();
 			allClasses.addAll(subclasses);
 			allClasses.add(matchedSignature.getParent());
 			allClasses.addAll(superclasses);
 
-			for (AbstractSignature newMatchedSignature : matcher.getMatchedSignaturesForNewName()) {
-				if (!(newMatchedSignature instanceof FujiMethodSignature)) continue;
+			for (final AbstractSignature newMatchedSignature : matcher.getMatchedSignaturesForNewName()) {
+				if (!(newMatchedSignature instanceof FeatureHouseMethodSignature)) {
+					continue;
+				}
 
-				final FujiMethodSignature newMethodSignature = (FujiMethodSignature) newMatchedSignature;
+				final FeatureHouseMethodSignature newMethodSignature = (FeatureHouseMethodSignature) newMatchedSignature;
 
 				final AbstractClassSignature clazz = newMethodSignature.getParent();
-				boolean found = allClasses.contains(clazz);
-				if (!found) continue;
+				final boolean found = allClasses.contains(clazz);
+				if (!found) {
+					continue;
+				}
 
 				final boolean isSubclass = subclasses.contains(clazz);
 
-				if (isSubclass || matchedSignature.getParent().equals(clazz)) result.add(newMethodSignature);
-				else if (reduceVisibility(newMethodSignature, methodSignature)) result.add(newMethodSignature);
+				if (isSubclass || matchedSignature.getParent().equals(clazz)) {
+					result.add(newMethodSignature);
+				} else if (reduceVisibility(newMethodSignature, methodSignature)) {
+					result.add(newMethodSignature);
+				}
 			}
 		}
 
-		for (FujiMethodSignature methodSignature : result) {
+		for (final FeatureHouseMethodSignature methodSignature : result) {
 			final FOPFeatureData[] featureData = (FOPFeatureData[]) methodSignature.getFeatureData();
-			for (AFeatureData aFeatureData : featureData) {
+			for (final AFeatureData aFeatureData : featureData) {
 				final String file = aFeatureData.getAbsoluteFilePath();
 
-				for (AFeatureData renamingFeatureData : renamingElement.getFeatureData()) {
+				for (final AFeatureData renamingFeatureData : renamingElement.getFeatureData()) {
 					if (RefactoringUtil.hasSameParameters(methodSignature, renamingElement)) {
-						String message = Messages.format(RefactoringCoreMessages.RenamePrivateMethodRefactoring_hierarchy_defines,
+						final String message = Messages.format(RefactoringCoreMessages.RenamePrivateMethodRefactoring_hierarchy_defines,
 								new String[] { getFullFilePath(file), BasicElementLabels.getJavaElementName(newName) });
-						if (file.equals(renamingFeatureData.getAbsoluteFilePath())) refactoringStatus.addError(message);
-						else refactoringStatus.addWarning(message);
+						if (file.equals(renamingFeatureData.getAbsoluteFilePath())) {
+							refactoringStatus.addError(message);
+						} else {
+							refactoringStatus.addWarning(message);
+						}
 					} else {
-						String message = Messages.format(RefactoringCoreMessages.RenamePrivateMethodRefactoring_hierarchy_defines2,
+						final String message = Messages.format(RefactoringCoreMessages.RenamePrivateMethodRefactoring_hierarchy_defines2,
 								new String[] { getFullFilePath(file), BasicElementLabels.getJavaElementName(newName) });
 						refactoringStatus.addWarning(message);
 					}
@@ -158,7 +173,7 @@ public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignatu
 //		}
 //		return false;
 //	}
-//	
+//
 //	public static boolean compareParamTypes(String[] paramTypes1, String[] paramTypes2) {
 //		if (paramTypes1.length == paramTypes2.length) {
 //			int i= 0;
@@ -178,7 +193,7 @@ public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignatu
 	@Override
 	public RefactoringStatus checkInitialConditions(IProgressMonitor pm) throws CoreException, OperationCanceledException {
 		if (renamingElement == null) {
-			String message = Messages.format(RefactoringCoreMessages.RenameMethodRefactoring_deleted, getFullFilePathForRenamingElement());
+			final String message = Messages.format(RefactoringCoreMessages.RenameMethodRefactoring_deleted, getFullFilePathForRenamingElement());
 			return RefactoringStatus.createFatalErrorStatus(message);
 		}
 		return super.checkInitialConditions(pm);
@@ -190,11 +205,14 @@ public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignatu
 		Assert.isNotNull(newName, "new name");
 
 		RefactoringStatus status = Checks.checkName(newName, validateMethodName(newName));
-		if (status.isOK() && !Checks.startsWithLowerCase(newName))
+		if (status.isOK() && !Checks.startsWithLowerCase(newName)) {
 			status = RefactoringStatus.createWarningStatus(Messages.format(RefactoringCoreMessages.Checks_method_names_lowercase2,
 					new String[] { BasicElementLabels.getJavaElementName(newName), ""/* getDeclaringTypeLabel() */ }));
+		}
 
-		if (renamingElement.getName().equals(newName)) status.addFatalError(RefactoringCoreMessages.RenameMethodRefactoring_same_name);
+		if (renamingElement.getName().equals(newName)) {
+			status.addFatalError(RefactoringCoreMessages.RenameMethodRefactoring_same_name);
+		}
 		return status;
 	}
 
@@ -206,7 +224,7 @@ public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignatu
 	 * @see JavaConventions#validateMethodName(String, String, String)
 	 */
 	public IStatus validateMethodName(String name) {
-		String[] sourceComplianceLevels = new String[] { JavaCore.getOption(JavaCore.COMPILER_SOURCE), JavaCore.getOption(JavaCore.COMPILER_COMPLIANCE) };
+		final String[] sourceComplianceLevels = new String[] { JavaCore.getOption(JavaCore.COMPILER_SOURCE), JavaCore.getOption(JavaCore.COMPILER_COMPLIANCE) };
 		return JavaConventions.validateMethodName(name, sourceComplianceLevels[0], sourceComplianceLevels[1]);
 	}
 
@@ -214,10 +232,16 @@ public class RenameMethodRefactoring extends RenameRefactoring<FujiMethodSignatu
 //		return JavaElementLabels.getElementLabel(renamingElement.getDeclaringType(), JavaElementLabels.ALL_DEFAULT);
 //	}
 
-	private boolean reduceVisibility(final FujiMethodSignature selectedSignature, final FujiMethodSignature methodSignature) {
-		if (selectedSignature.isDefault() && (methodSignature.isPrivate())) return true;
-		if (selectedSignature.isProtected() && (methodSignature.isPrivate() || methodSignature.isDefault())) return true;
-		if (selectedSignature.isPublic() && (methodSignature.isPrivate() || methodSignature.isDefault() || methodSignature.isProtected())) return true;
+	private boolean reduceVisibility(final FeatureHouseMethodSignature selectedSignature, final FeatureHouseMethodSignature methodSignature) {
+		if (selectedSignature.isDefault() && (methodSignature.isPrivate())) {
+			return true;
+		}
+		if (selectedSignature.isProtected() && (methodSignature.isPrivate() || methodSignature.isDefault())) {
+			return true;
+		}
+		if (selectedSignature.isPublic() && (methodSignature.isPrivate() || methodSignature.isDefault() || methodSignature.isProtected())) {
+			return true;
+		}
 		return false;
 	}
 }
