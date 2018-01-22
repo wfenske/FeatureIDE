@@ -1,91 +1,39 @@
 /* FeatureIDE - A Framework for Feature-Oriented Software Development
- * Copyright (C) 2005-2017  FeatureIDE team, University of Magdeburg, Germany
- *
- * This file is part of FeatureIDE.
- *
- * FeatureIDE is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * FeatureIDE is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with FeatureIDE.  If not, see <http://www.gnu.org/licenses/>.
- *
- * See http://featureide.cs.ovgu.de/ for further information.
- */
+* Copyright (C) 2005-2017  FeatureIDE team, University of Magdeburg, Germany
+*
+* This file is part of FeatureIDE.
+*
+* FeatureIDE is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* FeatureIDE is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU Lesser General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License
+* along with FeatureIDE.  If not, see <http://www.gnu.org/licenses/>.
+*
+* See http://featureide.cs.ovgu.de/ for further information.
+*/
 package de.ovgu.featureide.featurehouse;
 
-import static de.ovgu.featureide.fm.core.localization.StringTable.FUJI_SIGNATURES_LOADED_;
 import static de.ovgu.featureide.fm.core.localization.StringTable.LOADING_SIGNATURES_FOR;
-import static de.ovgu.featureide.fm.core.localization.StringTable.NO_FSTMODEL_PROVIDED_;
-import static de.ovgu.featureide.fm.core.localization.StringTable.RESTRICTION;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.internal.core.JavaProject;
+import org.eclipse.jdt.core.dom.ASTNode;
 
-import AST.ASTNode;
-import AST.Access;
-import AST.BodyDecl;
-import AST.ClassDecl;
-import AST.CompilationUnit;
-import AST.ConstructorAccess;
-import AST.ConstructorDecl;
-import AST.FieldDeclaration;
-import AST.ImportDecl;
-import AST.InterfaceDecl;
-import AST.List;
-import AST.MemberClassDecl;
-import AST.MemberInterfaceDecl;
-import AST.MethodAccess;
-import AST.MethodDecl;
-import AST.ParameterDeclaration;
-import AST.Program;
-import AST.TypeAccess;
-import AST.TypeDecl;
-import AST.VarAccess;
-import AST.VariableDeclaration;
+//import AST.ASTNode;
 import beaver.Symbol;
 import de.ovgu.featureide.core.IFeatureProject;
-import de.ovgu.featureide.core.fstmodel.FSTClassFragment;
-import de.ovgu.featureide.core.fstmodel.FSTFeature;
-import de.ovgu.featureide.core.fstmodel.FSTField;
-import de.ovgu.featureide.core.fstmodel.FSTMethod;
-import de.ovgu.featureide.core.fstmodel.FSTModel;
-import de.ovgu.featureide.core.fstmodel.FSTRole;
-import de.ovgu.featureide.core.fstmodel.IRoleElement;
 import de.ovgu.featureide.core.signature.ProjectSignatures;
-import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
-import de.ovgu.featureide.core.signature.base.AbstractMethodSignature;
 import de.ovgu.featureide.core.signature.base.AbstractSignature;
-import de.ovgu.featureide.core.signature.base.ExtendedSignature;
-import de.ovgu.featureide.core.signature.base.FOPFeatureData;
 import de.ovgu.featureide.core.signature.base.FeatureDataConstructor;
 import de.ovgu.featureide.core.signature.base.SignaturePosition;
-import de.ovgu.featureide.featurehouse.signature.fuji.FujiClassSignature;
-import de.ovgu.featureide.featurehouse.signature.fuji.FujiFieldSignature;
-import de.ovgu.featureide.featurehouse.signature.fuji.FujiLocalVariableSignature;
-import de.ovgu.featureide.featurehouse.signature.fuji.FujiMethodSignature;
-import de.ovgu.featureide.fm.core.FeatureModel;
 import de.ovgu.featureide.fm.core.job.AStoppableJob;
-import fuji.Composition;
-import fuji.Main;
-import fuji.SPLStructure;
 import de.ovgu.featureide.fm.core.job.LongRunningMethod;
 import de.ovgu.featureide.fm.core.job.monitor.IMonitor;
 
@@ -201,8 +149,8 @@ public class ExtendedFujiSignaturesJob extends AStoppableJob implements LongRunn
 	public ExtendedFujiSignaturesJob(IFeatureProject featureProject, boolean checkTypeAst, boolean fuildFSTModel) {
 		super(LOADING_SIGNATURES_FOR + featureProject.getProjectName());
 		this.featureProject = featureProject;
-		this.projectSignatures = new ProjectSignatures(this.featureProject.getFeatureModel());
-		this.featureDataConstructor = new FeatureDataConstructor(projectSignatures, FeatureDataConstructor.TYPE_FOP);
+		projectSignatures = new ProjectSignatures(this.featureProject.getFeatureModel());
+		featureDataConstructor = new FeatureDataConstructor(projectSignatures, FeatureDataConstructor.TYPE_FOP);
 		this.checkTypeAst = checkTypeAst;
 		this.fuildFSTModel = fuildFSTModel;
 	}
@@ -251,13 +199,14 @@ public class ExtendedFujiSignaturesJob extends AStoppableJob implements LongRunn
 //		return classpath.length() > 0 ? classpath.substring(1) : classpath.toString();
 //	}
 
-	private java.util.List<String> featureModulePathnames = null;
+	private final java.util.List<String> featureModulePathnames = null;
 
 	@SuppressWarnings("rawtypes")
 	private String getFeatureName(ASTNode astNode) {
-		int featureID = astNode.featureID();
+//		final int featureID = astNode.featureID();
+		final int featureID = astNode.getNodeType(); // not sure if this will work
 
-		String featurename = featureModulePathnames.get(featureID);
+		final String featurename = featureModulePathnames.get(featureID);
 		return featurename.substring(featurename.lastIndexOf(File.separator) + 1);
 	}
 
@@ -272,8 +221,8 @@ public class ExtendedFujiSignaturesJob extends AStoppableJob implements LongRunn
 //
 //		String sourcePath = featureProject.getSourcePath();
 //		String[] fujiOptions = new String[] { "-" + Main.OptionName.CLASSPATH, getClassPaths(featureProject), "-" + Main.OptionName.PROG_MODE,
-//				"-" + Main.OptionName.COMPOSTION_STRATEGY, Main.OptionName.COMPOSTION_STRATEGY_ARG_FAMILY // "-typechecker",
-//				, "-" + Main.OptionName.BASEDIR, sourcePath };
+//			"-" + Main.OptionName.COMPOSTION_STRATEGY, Main.OptionName.COMPOSTION_STRATEGY_ARG_FAMILY // "-typechecker",
+//			, "-" + Main.OptionName.BASEDIR, sourcePath };
 //		SPLStructure spl = null;
 //		Program ast;
 //
@@ -282,7 +231,7 @@ public class ExtendedFujiSignaturesJob extends AStoppableJob implements LongRunn
 //			Composition composition = fuji.getComposition(fuji);
 //			ast = composition.composeAST();
 //
-////			if (checkTypeAst)
+//			if (checkTypeAst)
 //				fuji.typecheckAST(ast);
 //
 //			spl = fuji.getSPLStructure();
@@ -690,10 +639,12 @@ public class ExtendedFujiSignaturesJob extends AStoppableJob implements LongRunn
 //		}
 //	}
 
-	private void findFieldAccess(ASTNode<?> stmt, AbstractSignature methAbs, int featureID, String absoluteFilePath) {
-		if (stmt == null) return;
-
-	}
+//	private void findFieldAccess(ASTNode<?> stmt, AbstractSignature methAbs, int featureID, String absoluteFilePath) {
+//		if (stmt == null) {
+//			return;
+//		}
+//
+//	}
 
 //	private void findMethodAccesses(ASTNode<?> stmt, AbstractSignature methAbs, int featureID, String absoluteFilePath) {
 //		if (stmt == null) {

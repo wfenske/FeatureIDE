@@ -21,7 +21,8 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.editors,
  org.eclipse.jface.text,
  org.eclipse.jface,
- de.ovgu.featureide.Cloneanalysis;bundle-version="1.0.0"
+ de.ovgu.featureide.Cloneanalysis;bundle-version="1.0.0",
+ org.eclipse.jdt.apt.core
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: lib/FeatureHouse.jar,
@@ -51,3 +52,4 @@ Export-Package: cide.features,
  de.ovgu.featureide.featurehouse.ui.handlers,
  de.ovgu.featureide.featurehouse.ui.handlers.toggle,
  fuji
+ 

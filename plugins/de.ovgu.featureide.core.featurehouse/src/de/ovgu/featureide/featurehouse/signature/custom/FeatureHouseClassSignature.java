@@ -25,54 +25,56 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
-import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.IImportDeclaration;
+import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 import com.sun.mirror.declaration.ClassDeclaration;
 import com.sun.mirror.declaration.InterfaceDeclaration;
 
+import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 
 /**
  * Holds the java signature of a class.
  */
 public class FeatureHouseClassSignature extends AbstractClassSignature {
-	
-	protected final List<ImportDeclaration> importList;
-	protected final LinkedList<TypeDeclaration> superTypes;
-	protected final LinkedList<TypeDeclaration> implementTypes;
 
-	@SuppressWarnings("deprecation")
-	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, TypeDeclaration typeDecl, List<ImportDeclaration> importList) {
+	protected final List<IImportDeclaration> importList;
+	protected final LinkedList<IType> superTypes;
+	protected final LinkedList<IType> implementTypes;
+
+	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, TypeDeclaration typeDecl,
+			List<IImportDeclaration> importList) throws JavaModelException {
 		super(parent, name, Modifier.toString(modifiers), type, pckg);
-		
+
 		this.importList = importList;
-		
-		superTypes = new LinkedList<TypeDeclaration>();
-		implementTypes = new LinkedList<TypeDeclaration>();
-		
+
+		superTypes = new LinkedList<IType>();
+		implementTypes = new LinkedList<IType>();
+
 		if (typeDecl instanceof ClassDeclaration) {
 			final ClassDeclaration classDecl = (ClassDeclaration) typeDecl;
-			superTypes.add((TypeDeclaration) classDecl.getSuperclass());
+			superTypes.add((IType) classDecl.getSuperclass());
 			addExtend(classDecl.getQualifiedName());
 			if (!classDecl.getQualifiedName().equals("Object")) {
 				addExtend(classDecl.getQualifiedName());
 			}
 			@SuppressWarnings("unchecked")
-			final Iterator<TypeDeclaration> implementInterfaceIt = (Iterator<TypeDeclaration>) classDecl.getSuperinterfaces();
+			final Iterator<IType> implementInterfaceIt = (Iterator<IType>) classDecl.getSuperinterfaces();
 			while (implementInterfaceIt.hasNext()) {
-				final TypeDeclaration implementType = implementInterfaceIt.next();
+				final IType implementType = implementInterfaceIt.next();
 				implementTypes.add(implementType);
-				addImplement(implementType.getSuperclass().getFullyQualifiedName());
+				addImplement(implementType.getSuperclassName());
 			}
 		} else if (typeDecl instanceof InterfaceDeclaration) {
 			@SuppressWarnings("unchecked")
-			final Iterator<TypeDeclaration> superInterfaceIt = (Iterator<TypeDeclaration>) ((InterfaceDeclaration) typeDecl).getSuperinterfaces();
+			final Iterator<IType> superInterfaceIt = (Iterator<IType>) ((InterfaceDeclaration) typeDecl).getSuperinterfaces();
 			while (superInterfaceIt.hasNext()) {
-				final TypeDeclaration superInterface = superInterfaceIt.next();
+				final IType superInterface = superInterfaceIt.next();
 				superTypes.add(superInterface);
-				if (!superInterface.getName().equals("Object")) {
-					addExtend(superInterface.getSuperclass().getFullyQualifiedName());
+				if (!superInterface.getFullyQualifiedName().equals("Object")) {
+					addExtend(superInterface.getSuperclassName());
 				}
 			}
 		}

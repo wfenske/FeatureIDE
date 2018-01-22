@@ -190,6 +190,7 @@ public class CloneAnalysisUtils {
 				for (FeatureRootLocation feature : relevantFeatures) {
 					short[] lines = featureClonedLinesPerFile.get(feature).get(file);
 					if (lines != null) {
+						
 						for (int i = occurence.getStartIndex(); i < (clone.getLineCount() + occurence.getStartIndex())
 								&& i < countFileLines(occurence.getFile()); i++) {
 							lines[i] = ++(lines[i]);

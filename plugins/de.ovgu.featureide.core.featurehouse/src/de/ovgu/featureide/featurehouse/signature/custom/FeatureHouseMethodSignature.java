@@ -27,9 +27,7 @@ import java.util.List;
 
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 
-import com.sun.mirror.declaration.ParameterDeclaration;
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 import de.ovgu.featureide.core.signature.base.AbstractMethodSignature;
 
@@ -40,16 +38,17 @@ import de.ovgu.featureide.core.signature.base.AbstractMethodSignature;
 public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 
 	protected List<SingleVariableDeclaration> p = new LinkedList<>();
-	
-	protected TypeDeclaration returnType;
-	protected List<ParameterDeclaration> parameterList;
+
+	protected Type returnType;
+	protected List<SingleVariableDeclaration> parameterList;
 //	protected List<Access> exceptionList;
 
-	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, TypeDeclaration returnType, List<ParameterDeclaration> parameters, boolean isConstructor) {
+	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<SingleVariableDeclaration> parameters,
+			boolean isConstructor) {
 		super(parent, name, Modifier.toString(modifiers), returnType.toString(), new LinkedList<String>(), isConstructor);
-		
+
 		this.returnType = returnType;
-		this.parameterList = parameters;
+		parameterList = parameters;
 		for (final Object parameter : parameters) {
 			final SingleVariableDeclaration parameterDeclaration = (SingleVariableDeclaration) parameter;
 			p.add(parameterDeclaration);
@@ -57,9 +56,14 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<?> parameters, boolean isConstructor,
 			int startLine, int endLine) {
-		super(parent, name, Modifier.toString(modifiers), returnType.toString(), new LinkedList<String>(), isConstructor, startLine, endLine);
+		super(parent, name, Modifier.toString(modifiers), null, new LinkedList<String>(), isConstructor, startLine, endLine);
+
+		this.returnType = returnType;
+		parameterList = (List<SingleVariableDeclaration>) parameters;
+
 		for (final Object parameter : parameters) {
 			final SingleVariableDeclaration parameterDeclaration = (SingleVariableDeclaration) parameter;
 			p.add(parameterDeclaration);
@@ -90,7 +94,7 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 		methodString.append(name);
 		methodString.append('(');
 		boolean notfirst = false;
-		for (final ParameterDeclaration parameter : parameterList) {
+		for (final SingleVariableDeclaration parameter : parameterList) {
 			if (notfirst) {
 				methodString.append(", ");
 			} else {
@@ -98,7 +102,8 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 			}
 			methodString.append(parameter.getType().toString());
 			methodString.append(' ');
-			methodString.append(parameter.getSimpleName());
+//			methodString.append(parameter.getSimpleName());
+			methodString.append(parameter.toString());
 		}
 		methodString.append(')');
 
@@ -112,7 +117,7 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 		hashCode = (hashCodePrime * hashCode) + type.hashCode();
 
 		hashCode = (hashCodePrime * hashCode) + (isConstructor ? 1231 : 1237);
-		for (final ParameterDeclaration parameter : parameterList) {
+		for (final SingleVariableDeclaration parameter : parameterList) {
 			hashCode = (hashCodePrime * hashCode) + parameter.getType().toString().hashCode();
 		}
 	}
@@ -139,11 +144,11 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 			return false;
 		}
 
-		final Iterator<ParameterDeclaration> thisIt = parameterList.iterator();
-		final Iterator<ParameterDeclaration> otherIt = otherSig.parameterList.iterator();
+		final Iterator<SingleVariableDeclaration> thisIt = parameterList.iterator();
+		final Iterator<SingleVariableDeclaration> otherIt = otherSig.parameterList.iterator();
 		while (thisIt.hasNext()) {
-			final ParameterDeclaration tNext = thisIt.next();
-			final ParameterDeclaration oNext = otherIt.next();
+			final SingleVariableDeclaration tNext = thisIt.next();
+			final SingleVariableDeclaration oNext = otherIt.next();
 			if (!tNext.getType().equals(oNext.getType())) {
 				return false;
 			}
