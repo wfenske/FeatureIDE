@@ -2,8 +2,13 @@ package de.ovgu.featureide.cloneanalysis.views;
 
 import java.util.HashSet;
 
+import javax.inject.Inject;
+
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.ICoreRunnable;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.e4.ui.di.UISynchronize;
 import org.eclipse.jdt.internal.ui.packageview.PackageExplorerPart;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
@@ -38,6 +43,7 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.ViewPart;
 
 import de.ovgu.featureide.cloneanalysis.impl.CloneOccurence;
+import de.ovgu.featureide.cloneanalysis.plugin.CloneAnalysisCommandHandler;
 import de.ovgu.featureide.cloneanalysis.results.CloneAnalysisResults;
 import de.ovgu.featureide.cloneanalysis.results.FeatureRootLocation;
 import de.ovgu.featureide.cloneanalysis.results.VariantAwareClone;
@@ -61,6 +67,7 @@ public class CloneAnalysisView extends ViewPart {
 	private Action action1;
 	private Action action2;
 	private Action doubleClickAction;
+	@Inject UISynchronize sync;
 
 	private HashSet<Action> filterActions;
 
@@ -122,7 +129,6 @@ public class CloneAnalysisView extends ViewPart {
 		column15.setWidth(50);
 		cloneTree.setSortColumn(column15);
 		cloneTree.setSortDirection(SWT.DOWN);
-		// cloneTree.setSortDirection(SWT.UP);
 		column15.addSelectionListener(new SortTreeListener());
 
 		TreeColumn column2 = new TreeColumn(cloneTree, SWT.RIGHT);
@@ -130,8 +136,6 @@ public class CloneAnalysisView extends ViewPart {
 		column2.setText(CloneAnalysisTreeColumn.LENGTH.toString());
 		column2.setWidth(50);
 		column2.addSelectionListener(new SortTreeListener());
-		// cloneTree.setSortColumn(column2);
-		// cloneTree.setSortDirection(SWT.DOWN);
 
 		TreeColumn column3 = new TreeColumn(cloneTree, SWT.RIGHT);
 		column3.setAlignment(SWT.LEFT);
@@ -214,19 +218,6 @@ public class CloneAnalysisView extends ViewPart {
 		action2.setToolTipText("Action 2 tooltip");
 		action2.setImageDescriptor(
 				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-		// doubleClickAction = new Action()
-		// {
-		// public void run()
-		// {
-		// // TreeItem<VariantAwareClone> selectedItem =
-		// // matchViewer.getSelectionModel().getSelectedItem();
-		// // showMessage("Double-click detected on " +
-		// // selectedItem.toString());
-		//
-		//
-		//
-		// }
-		// };
 	}
 
 	private void hookDoubleClickAction() {
@@ -266,6 +257,23 @@ public class CloneAnalysisView extends ViewPart {
 		cloneViewer.setInput(results);
 		cloneViewer.expandToLevel(1);
 		cloneViewer.refresh();
+	}
+
+	public void scheduleJob(String name, Class<? extends ICoreRunnable> runnable) {
+		try {
+			Job job = Job.create(name, runnable.newInstance());
+			job.schedule(500);
+		} catch (InstantiationException | IllegalAccessException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void showProgress() {
+		try {
+			getSite().getPage().showView("org.eclipse.ui.views.ProgressView");
+		} catch (PartInitException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private void createFilterActions() {
