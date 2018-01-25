@@ -82,8 +82,6 @@ public class CloneAnalysisCommandHandler extends AbstractHandler implements ICor
 	private static ExecutionEvent currentEvent;
 	static CloneAnalysisView cloneAnalysis;
 	static IStructuredSelection currentSelection;
-	static String message;
-	static String formattedMessage;
 	static Display globalDisplay;
 
 	public void progressMethod() {
@@ -138,15 +136,17 @@ public class CloneAnalysisCommandHandler extends AbstractHandler implements ICor
 
 				final IPath location = ResourcesPlugin.getWorkspace().getRoot().getLocation();
 				for (VariantAwareClone clone : formattedResults.getClones()) {
-					message="";
-					formattedMessage = "";
+					StringBuilder  message=new StringBuilder();
+					StringBuilder formattedMessage = new StringBuilder();
 					int count = 0;
 					for (CloneOccurence occ : clone.getOccurences()) {
 
 						String file = CloneAnalysisUtils.getFileFromPath(occ.getFile()).getLocation().toString();
-						message += occ.getFile() + ";";
-						formattedMessage += "[ " + occ.getFile().segment(6) + " ]   " + occ.getFile().lastSegment()
-								+ ";    ";
+//						message += occ.getFile() + ";";
+						message.append(occ.getFile()).append(";");
+//						formattedMessage += "[ " + occ.getFile().segment(6) + " ]   " + occ.getFile().lastSegment()
+//								+ ";    ";
+						formattedMessage.append("[ ").append( occ.getFile().segment(6)).append(" ]   ").append(occ.getFile().lastSegment()).append(";    ");
 					}
 
 					final List<IPath> distinctFiles = clone.getDistinctFiles();
@@ -198,7 +198,7 @@ public class CloneAnalysisCommandHandler extends AbstractHandler implements ICor
 
 						try{
 						 globalDisplay.syncExec(() -> {
-						 CloneAnalysisMarkers.addProblemMarker(file, message,formattedMessage, occ.getStartIndex(), markerPositions[0], markerPositions[1]);
+						 CloneAnalysisMarkers.addProblemMarker(file, message.toString(),formattedMessage.toString(), occ.getStartIndex(), markerPositions[0], markerPositions[1]);
 						 });
 						}catch( SWTException a){
 							a.printStackTrace();
@@ -224,6 +224,7 @@ public class CloneAnalysisCommandHandler extends AbstractHandler implements ICor
 			time = System.currentTimeMillis() - time;
 			double timeD = ((double) time) / 1000.0;
 			System.out.println("Overall clone analysis execution time: " + timeD + "s");
+			
 		}catch (NullPointerException e) {
 			// Restore the interrupted status
 			Thread.currentThread().interrupt();
