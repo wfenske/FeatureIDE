@@ -257,6 +257,7 @@ public class CloneAnalysisView extends ViewPart {
 		cloneViewer.setInput(results);
 		cloneViewer.expandToLevel(1);
 		cloneViewer.refresh();
+		showMessage("Completed!","Clone Analysis Complete.");
 	}
 
 	public void scheduleJob(String name, Class<? extends ICoreRunnable> runnable) {
@@ -383,6 +384,12 @@ public class CloneAnalysisView extends ViewPart {
 		// disposed
 		getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(selectionListener);
 		super.dispose();
+	}
+
+	public void showMessage(String title, String msg) {
+		PlatformUI.getWorkbench().getDisplay().syncExec(()->{
+			MessageDialog.openInformation(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), title, msg);
+		});
 	}
 
 }
