@@ -22,7 +22,8 @@ package de.ovgu.featureide.featurehouse.signature.custom;
 
 import java.lang.reflect.Modifier;
 
-import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.IType;
+
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 import de.ovgu.featureide.core.signature.base.AbstractFieldSignature;
 
@@ -32,14 +33,13 @@ import de.ovgu.featureide.core.signature.base.AbstractFieldSignature;
  */
 public class FeatureHouseFieldSignature extends AbstractFieldSignature {
 
-	public FeatureHouseFieldSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType) {
+	public FeatureHouseFieldSignature(AbstractClassSignature parent, String name, int modifiers, IType returnType) {
 		super(parent, name, Modifier.toString(modifiers), returnType.toString());
 	}
 
-	public FeatureHouseFieldSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, int line) {
+	public FeatureHouseFieldSignature(AbstractClassSignature parent, String name, int modifiers, IType returnType, int line) {
 		super(parent, name, Modifier.toString(modifiers), returnType.toString(), line);
 	}
-	
 
 	@Override
 	public String toString() {

@@ -26,7 +26,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -35,28 +34,26 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
+import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jdt.core.IPackageFragment;
+import org.eclipse.jdt.core.ISourceRange;
 import org.eclipse.jdt.core.IType;
+import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-//import org.eclipse.jdt.core.dom.co
-import org.eclipse.jdt.core.dom.Type;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import com.sun.mirror.declaration.ClassDeclaration;
-import com.sun.mirror.declaration.ConstructorDeclaration;
 import com.sun.mirror.declaration.InterfaceDeclaration;
 
 import de.ovgu.featureide.core.CorePlugin;
@@ -163,15 +160,15 @@ public abstract class FeatureHouseSignatureBuilder {
 				System.out.println(" This is the method call at the moment: " + node.toString());
 				if (node != null) {
 
-//					final int pos = unit.getLineNumber(node.getBody().getStartPosition());
-//					final int end = unit.getLineNumber(node.getBody().getStartPosition() + node.getBody().getLength());
+					final int pos = unit.getLineNumber(node.getBody().getStartPosition());
+					final int end = unit.getLineNumber(node.getBody().getStartPosition() + node.getBody().getLength());
 
 					final int pos = unit.getLineNumber(node.getStartPosition());
 					final int end = unit.getLineNumber(node.getStartPosition() + node.getLength());
 
 					final FeatureHouseMethodSignature methodSignature = new FeatureHouseMethodSignature(getParent(node.getParent()),
 							node.getName().getIdentifier(), node.getModifiers(), node.getReturnType2(), node.parameters(), node.isConstructor(), pos, end);
-
+//
 					attachFeatureData(methodSignature, node);
 				}
 
@@ -184,18 +181,18 @@ public abstract class FeatureHouseSignatureBuilder {
 
 			}
 
-			private AbstractClassSignature getParent(ASTNode astnode) {
+			private AbstractClassSignature getParent(ASTNode astnode) throws JavaModelException {
 				final AbstractClassSignature sig;
-				if (astnode instanceof TypeDeclaration) {
-					final TypeDeclaration node = (TypeDeclaration) astnode;
-					sig = new FeatureHouseClassSignature(null, node.getName().getIdentifier(), node.getModifiers(), node.isInterface() ? "interface" : "class",
-							packageName, node, null);
+				if (astnode instanceof IType) {
+					final IType node = (IType) astnode;
+					sig = new FeatureHouseClassSignature(null, node.getElementName(), node.getFlags(), node.isInterface() ? "interface" : "class", packageName,
+							node, null);
 				} else {
 					return null;
 				}
 				final AbstractClassSignature uniqueSig = (AbstractClassSignature) map.get(sig);
 				if (uniqueSig == null) {
-					visit((TypeDeclaration) astnode);
+					visit((Javadoc) astnode);
 				}
 				return uniqueSig;
 			}
@@ -222,7 +219,7 @@ public abstract class FeatureHouseSignatureBuilder {
 				attachFeatureData(classSignature, node);
 
 				return super.visit(node);
-			}
+//			}
 
 		});
 		return map.keySet();
@@ -262,6 +259,11 @@ public abstract class FeatureHouseSignatureBuilder {
 //		return projectSignatures;
 //	}
 
+	/**
+	 * The incomplete implementation below is an attempt to create a replication of rename refactoring via Fuji/ExtendJ with default eclipse plugins API. The
+	 * default/ previously used approach is the code snippet comment above.
+	 **/
+
 	private final static HashMap<AbstractSignature, SignatureReference> signatureSet = new HashMap<AbstractSignature, SignatureReference>();
 	private final static HashMap<String, AbstractSignature> signatureTable = new HashMap<String, AbstractSignature>();
 
@@ -273,7 +275,7 @@ public abstract class FeatureHouseSignatureBuilder {
 
 		featureDataConstructor = new FeatureDataConstructor(projectSignatures, FeatureDataConstructor.TYPE_FOP);
 
-		final LinkedList<TypeDeclaration> stack = new LinkedList<TypeDeclaration>();
+		final LinkedList<IType> stack = new LinkedList<IType>();
 		final LinkedList<AbstractClassSignature> roleStack = new LinkedList<AbstractClassSignature>();
 
 		final IProject project = featureProject.getProject();
@@ -290,13 +292,11 @@ public abstract class FeatureHouseSignatureBuilder {
 			// get compilation units
 			for (final ICompilationUnit unit : myPackage.getCompilationUnits()) {
 
-				String featurename = featureProject.getFeatureName(unit.getResource());
+				final String featurename = featureProject.getFeatureName(unit.getResource());
 
 //				final TypeDeclaration[] typeDeclList = (TypeDeclaration[]) unit.getTypes();
 
 				final IType[] types = unit.getTypes();
-
-				// iterate through the normal IType array and perform the cast later.
 
 				final String pckg = "package"; // unit.getPackageDeclaration(null).toString();
 
@@ -308,17 +308,16 @@ public abstract class FeatureHouseSignatureBuilder {
 
 				for (int i = 0; i < types.length; i++) {
 
-//					final TypeDeclaration rootTypeDecl = typeDeclList[i];
-					final TypeDeclaration rootTypeDecl = (TypeDeclaration) types[i];
+					final IType rootTypeDecl = types[i];
 					stack.push(rootTypeDecl);
 
 					do {
 
-						final TypeDeclaration typeDecl = stack.pop();
+						final IType typeDecl = stack.pop();
 
-						String name = typeDecl.getName().toString();
+						String name = typeDecl.getFullyQualifiedName();
 
-						String modifierString = "";
+						final String modifierString = "";
 //							String modifierString = classModifierSB.toString();
 
 						String typeString = null;
@@ -331,85 +330,53 @@ public abstract class FeatureHouseSignatureBuilder {
 						if (!roleStack.isEmpty()) {
 							parent = roleStack.pop();
 						}
-						featurename = getFeatureName((ASTNode) typeDecl);
+
+						final ISourceRange sourceRange = typeDecl.getSourceRange();
+//						featurename = getFeatureName((ASTNode) typeDecl); asumption that all the compilation units here will have the same feature name
+
 						final FeatureHouseClassSignature curClassSig = (FeatureHouseClassSignature) addFeatureID(
-								new FeatureHouseClassSignature(parent, name, typeDecl.getModifiers(), typeString, pckg, typeDecl, importList),
-								projectSignatures.getFeatureID(featurename), typeDecl.getStartPosition(), typeDecl.getLength() - typeDecl.getStartPosition());
+								new FeatureHouseClassSignature(parent, name, typeDecl.getFlags(), typeString, pckg, typeDecl, importList),
+								projectSignatures.getFeatureID(featurename), sourceRange.getOffset(), sourceRange.getOffset() + sourceRange.getLength());
 
 						for (final IImportDeclaration importDecl : importList) {
 							curClassSig.addImport(importDecl.toString());
 						}
 
-						@SuppressWarnings("unchecked")
-						final List<BodyDeclaration> bodies = typeDecl.bodyDeclarations();
-						for (final BodyDeclaration bodyDecl : bodies) {
+						final IMethod[] methods = typeDecl.getMethods();
 
-							if (bodyDecl instanceof MethodDeclaration) {
-								final MethodDeclaration method = (MethodDeclaration) bodyDecl;
+						for (final IMethod method : methods) {
 
-								// not convinced about this modifiers implementation
-								final StringBuilder bodyModifierSB = new StringBuilder();
-								final List<BodyDeclaration> modifiers = method.modifiers();
-								for (int index = 0; index < modifiers.size(); index++) {
-									final BodyDeclaration modifier = modifiers.get(index);
-									bodyModifierSB.append(modifier.getModifiers() + " ");
-								}
-								modifierString = bodyModifierSB.toString();
-								name = method.getName().toString();
+							name = method.getElementName();
+							final String type = method.getReturnType();
+							final ITypeParameter[] parameters = method.getTypeParameters();
 
-								final Type type = method.getReturnType();
+							final List<SingleVariableDeclaration> parameterList = new ArrayList<>();
 
-								final List<SingleVariableDeclaration> parameterList = method.typeParameters();
-//								final List<Access> exceptionList = method.getExceptionList();
-
-								featurename = getFeatureName(bodyDecl);
-								addFeatureID(new FeatureHouseMethodSignature(curClassSig, name, method.getModifiers(), type, parameterList, false),
-										projectSignatures.getFeatureID(featurename), typeDecl.getStartPosition(),
-										typeDecl.getLength() - typeDecl.getStartPosition());
-
-							} else if (bodyDecl instanceof FieldDeclaration) {
-
-								final FieldDeclaration field = (FieldDeclaration) bodyDecl;
-
-								name = field.toString();
-								final Type type = field.getType();
-
-								featurename = getFeatureName(bodyDecl);
-								addFeatureID(new FeatureHouseFieldSignature(curClassSig, name, field.getModifiers(), type),
-										projectSignatures.getFeatureID(featurename), typeDecl.getStartPosition(),
-										typeDecl.getLength() - typeDecl.getStartPosition());
-
-							} else if (bodyDecl instanceof ConstructorDeclaration) { // constructor
-//
-								final ConstructorDeclaration constructor = (ConstructorDeclaration) bodyDecl;
-//								if (!constructor) {
-								// get modifiers
-//									final StringBuilder bodyModifierSB = new StringBuilder();
-//									for (final Modifier modifier : constructor.getModifiers().getModifierList()) {
-//										bodyModifierSB.append(modifier.getID() + " ");
-//									}
-//									modifierString = bodyModifierSB.toString();
-								name = constructor.getSimpleName();
-//								final Type type = constructor.getDeclaringType();
-								final Type type = (Type) constructor.getDeclaringType();
-
-								final List parameterList = (List) constructor.getParameters();
-								;
-//								final List<SingleVariableDeclaration> parameterList = constructor.getFormalTypeParameters();
-//									final List<Access> exceptionList = constructorgetExceptionList();
-
-								featurename = getFeatureName(bodyDecl);
-								addFeatureID(new FeatureHouseMethodSignature(curClassSig, name, constructor.getModifiers().size(), type, parameterList, true),
-										projectSignatures.getFeatureID(featurename), typeDecl.getStartPosition(),
-										typeDecl.getLength() - typeDecl.getStartPosition());
-
+							for (final ITypeParameter parameter : parameters) {
+								parameterList.add((SingleVariableDeclaration) parameter);
 							}
-//							else if () {//MemberClassDecla
-//
-//							}
-//							else if() { //Member Interface Decla
-//
-//							}
+							final String[] exceptions = method.getExceptionTypes();
+
+//							featurename = getFeatureName((ASTNode) method);
+
+							final ISourceRange methodSourceRange = method.getSourceRange();
+
+							addFeatureID(new FeatureHouseMethodSignature(curClassSig, name, method.getFlags(), type, parameterList, false),
+									projectSignatures.getFeatureID(featurename), methodSourceRange.getOffset(),
+									methodSourceRange.getLength() - sourceRange.getOffset());
+
+						}
+
+						final IField[] fields = typeDecl.getFields();
+						for (final IField field : fields) {
+
+							name = field.getElementName();
+							final IType type = field.getDeclaringType();
+							final ISourceRange fieldSourceRange = field.getSourceRange();
+
+//							featurename = getFeatureName((ASTNode) field);
+							addFeatureID(new FeatureHouseFieldSignature(curClassSig, name, field.getFlags(), type), projectSignatures.getFeatureID(featurename),
+									fieldSourceRange.getOffset(), fieldSourceRange.getOffset() + fieldSourceRange.getLength());
 
 						}
 

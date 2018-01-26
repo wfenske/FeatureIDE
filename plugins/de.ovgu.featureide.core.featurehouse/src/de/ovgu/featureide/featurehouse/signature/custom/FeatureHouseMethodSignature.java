@@ -26,7 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
-import org.eclipse.jdt.core.dom.Type;
 
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 import de.ovgu.featureide.core.signature.base.AbstractMethodSignature;
@@ -39,11 +38,11 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 
 	protected List<SingleVariableDeclaration> p = new LinkedList<>();
 
-	protected Type returnType;
+	protected String returnType;
 	protected List<SingleVariableDeclaration> parameterList;
 //	protected List<Access> exceptionList;
 
-	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<SingleVariableDeclaration> parameters,
+	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, String returnType, List<SingleVariableDeclaration> parameters,
 			boolean isConstructor) {
 		super(parent, name, Modifier.toString(modifiers), returnType.toString(), new LinkedList<String>(), isConstructor);
 
@@ -57,7 +56,7 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 	}
 
 	@SuppressWarnings("unchecked")
-	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<?> parameters, boolean isConstructor,
+	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, String returnType, List<?> parameters, boolean isConstructor,
 			int startLine, int endLine) {
 		super(parent, name, Modifier.toString(modifiers), null, new LinkedList<String>(), isConstructor, startLine, endLine);
 

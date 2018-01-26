@@ -28,7 +28,6 @@ import java.util.List;
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
 
 import com.sun.mirror.declaration.ClassDeclaration;
 import com.sun.mirror.declaration.InterfaceDeclaration;
@@ -44,8 +43,8 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 	protected final LinkedList<IType> superTypes;
 	protected final LinkedList<IType> implementTypes;
 
-	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, TypeDeclaration typeDecl,
-			List<IImportDeclaration> importList) throws JavaModelException {
+	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, IType typeDecl,
+			List<IImportDeclaration> importList) {
 		super(parent, name, Modifier.toString(modifiers), type, pckg);
 
 		this.importList = importList;
@@ -65,7 +64,12 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 			while (implementInterfaceIt.hasNext()) {
 				final IType implementType = implementInterfaceIt.next();
 				implementTypes.add(implementType);
-				addImplement(implementType.getSuperclassName());
+				try {
+					addImplement(implementType.getSuperclassName());
+				} catch (final JavaModelException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
 		} else if (typeDecl instanceof InterfaceDeclaration) {
 			@SuppressWarnings("unchecked")
@@ -74,7 +78,12 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 				final IType superInterface = superInterfaceIt.next();
 				superTypes.add(superInterface);
 				if (!superInterface.getFullyQualifiedName().equals("Object")) {
-					addExtend(superInterface.getSuperclassName());
+					try {
+						addExtend(superInterface.getSuperclassName());
+					} catch (final JavaModelException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 			}
 		}
