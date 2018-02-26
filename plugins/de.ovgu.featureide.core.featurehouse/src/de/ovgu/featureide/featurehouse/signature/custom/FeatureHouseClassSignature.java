@@ -29,11 +29,15 @@ import java.util.List;
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+<<<<<<< HEAD
 =======
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 import org.eclipse.jdt.core.dom.ImportDeclaration;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 >>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
+=======
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+>>>>>>> parent of a158d4877... the final but incomplete implementation of rename refactoring using built-in Eclipse plugins API
 
 import com.sun.mirror.declaration.ClassDeclaration;
 import com.sun.mirror.declaration.InterfaceDeclaration;
@@ -53,12 +57,17 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 	protected final LinkedList<IType> superTypes;
 	protected final LinkedList<IType> implementTypes;
 
+<<<<<<< HEAD
 	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, IType typeDecl,
 			List<IImportDeclaration> importList) {
 =======
 	@SuppressWarnings("deprecation")
 	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, TypeDeclaration typeDecl, List<ImportDeclaration> importList) {
 >>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
+=======
+	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, TypeDeclaration typeDecl,
+			List<IImportDeclaration> importList) throws JavaModelException {
+>>>>>>> parent of a158d4877... the final but incomplete implementation of rename refactoring using built-in Eclipse plugins API
 		super(parent, name, Modifier.toString(modifiers), type, pckg);
 		
 		this.importList = importList;
@@ -79,6 +88,7 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 				final TypeDeclaration implementType = implementInterfaceIt.next();
 				implementTypes.add(implementType);
 <<<<<<< HEAD
+<<<<<<< HEAD
 				try {
 					addImplement(implementType.getSuperclassName());
 				} catch (final JavaModelException e) {
@@ -88,6 +98,9 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 =======
 				addImplement(implementType.getSuperclass().getFullyQualifiedName());
 >>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
+=======
+				addImplement(implementType.getSuperclassName());
+>>>>>>> parent of a158d4877... the final but incomplete implementation of rename refactoring using built-in Eclipse plugins API
 			}
 		} else if (typeDecl instanceof InterfaceDeclaration) {
 			@SuppressWarnings("unchecked")
@@ -97,6 +110,7 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 				superTypes.add(superInterface);
 <<<<<<< HEAD
 				if (!superInterface.getFullyQualifiedName().equals("Object")) {
+<<<<<<< HEAD
 					try {
 						addExtend(superInterface.getSuperclassName());
 					} catch (final JavaModelException e) {
@@ -107,6 +121,9 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 				if (!superInterface.getName().equals("Object")) {
 					addExtend(superInterface.getSuperclass().getFullyQualifiedName());
 >>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
+=======
+					addExtend(superInterface.getSuperclassName());
+>>>>>>> parent of a158d4877... the final but incomplete implementation of rename refactoring using built-in Eclipse plugins API
 				}
 			}
 		}

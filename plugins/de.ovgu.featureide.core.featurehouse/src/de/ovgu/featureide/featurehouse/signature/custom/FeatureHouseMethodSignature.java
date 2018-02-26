@@ -27,10 +27,14 @@ import java.util.List;
 
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import org.eclipse.jdt.core.dom.Type;
 import org.eclipse.jdt.core.dom.TypeDeclaration;
 >>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
+=======
+import org.eclipse.jdt.core.dom.Type;
+>>>>>>> parent of a158d4877... the final but incomplete implementation of rename refactoring using built-in Eclipse plugins API
 
 import com.sun.mirror.declaration.ParameterDeclaration;
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
@@ -45,11 +49,11 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 	protected List<SingleVariableDeclaration> p = new LinkedList<>();
 <<<<<<< HEAD
 
-	protected String returnType;
+	protected Type returnType;
 	protected List<SingleVariableDeclaration> parameterList;
 //	protected List<Access> exceptionList;
 
-	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, String returnType, List<SingleVariableDeclaration> parameters,
+	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<SingleVariableDeclaration> parameters,
 			boolean isConstructor) {
 =======
 	
@@ -72,10 +76,14 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 
 <<<<<<< HEAD
 	@SuppressWarnings("unchecked")
+<<<<<<< HEAD
 	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, String returnType, List<?> parameters, boolean isConstructor,
 =======
 	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<?> parameters, boolean isConstructor,
 >>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
+=======
+	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<?> parameters, boolean isConstructor,
+>>>>>>> parent of a158d4877... the final but incomplete implementation of rename refactoring using built-in Eclipse plugins API
 			int startLine, int endLine) {
 		super(parent, name, Modifier.toString(modifiers), returnType.toString(), new LinkedList<String>(), isConstructor, startLine, endLine);
 		for (final Object parameter : parameters) {
