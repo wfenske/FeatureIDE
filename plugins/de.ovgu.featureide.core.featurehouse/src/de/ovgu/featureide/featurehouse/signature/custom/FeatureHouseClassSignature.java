@@ -25,58 +25,77 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+<<<<<<< HEAD
 import org.eclipse.jdt.core.IImportDeclaration;
 import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.JavaModelException;
+=======
+import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
+import org.eclipse.jdt.core.dom.ImportDeclaration;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 
 import com.sun.mirror.declaration.ClassDeclaration;
 import com.sun.mirror.declaration.InterfaceDeclaration;
 
-import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 
 /**
  * Holds the java signature of a class.
  */
 public class FeatureHouseClassSignature extends AbstractClassSignature {
+	
+	protected final List<ImportDeclaration> importList;
+	protected final LinkedList<TypeDeclaration> superTypes;
+	protected final LinkedList<TypeDeclaration> implementTypes;
 
+<<<<<<< HEAD
 	protected final List<IImportDeclaration> importList;
 	protected final LinkedList<IType> superTypes;
 	protected final LinkedList<IType> implementTypes;
 
 	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, IType typeDecl,
 			List<IImportDeclaration> importList) {
+=======
+	@SuppressWarnings("deprecation")
+	public FeatureHouseClassSignature(AbstractClassSignature parent, String name, int modifiers, String type, String pckg, TypeDeclaration typeDecl, List<ImportDeclaration> importList) {
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 		super(parent, name, Modifier.toString(modifiers), type, pckg);
-
+		
 		this.importList = importList;
-
-		superTypes = new LinkedList<IType>();
-		implementTypes = new LinkedList<IType>();
-
+		
+		superTypes = new LinkedList<TypeDeclaration>();
+		implementTypes = new LinkedList<TypeDeclaration>();
+		
 		if (typeDecl instanceof ClassDeclaration) {
 			final ClassDeclaration classDecl = (ClassDeclaration) typeDecl;
-			superTypes.add((IType) classDecl.getSuperclass());
+			superTypes.add((TypeDeclaration) classDecl.getSuperclass());
 			addExtend(classDecl.getQualifiedName());
 			if (!classDecl.getQualifiedName().equals("Object")) {
 				addExtend(classDecl.getQualifiedName());
 			}
 			@SuppressWarnings("unchecked")
-			final Iterator<IType> implementInterfaceIt = (Iterator<IType>) classDecl.getSuperinterfaces();
+			final Iterator<TypeDeclaration> implementInterfaceIt = (Iterator<TypeDeclaration>) classDecl.getSuperinterfaces();
 			while (implementInterfaceIt.hasNext()) {
-				final IType implementType = implementInterfaceIt.next();
+				final TypeDeclaration implementType = implementInterfaceIt.next();
 				implementTypes.add(implementType);
+<<<<<<< HEAD
 				try {
 					addImplement(implementType.getSuperclassName());
 				} catch (final JavaModelException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+=======
+				addImplement(implementType.getSuperclass().getFullyQualifiedName());
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 			}
 		} else if (typeDecl instanceof InterfaceDeclaration) {
 			@SuppressWarnings("unchecked")
-			final Iterator<IType> superInterfaceIt = (Iterator<IType>) ((InterfaceDeclaration) typeDecl).getSuperinterfaces();
+			final Iterator<TypeDeclaration> superInterfaceIt = (Iterator<TypeDeclaration>) ((InterfaceDeclaration) typeDecl).getSuperinterfaces();
 			while (superInterfaceIt.hasNext()) {
-				final IType superInterface = superInterfaceIt.next();
+				final TypeDeclaration superInterface = superInterfaceIt.next();
 				superTypes.add(superInterface);
+<<<<<<< HEAD
 				if (!superInterface.getFullyQualifiedName().equals("Object")) {
 					try {
 						addExtend(superInterface.getSuperclassName());
@@ -84,6 +103,10 @@ public class FeatureHouseClassSignature extends AbstractClassSignature {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+=======
+				if (!superInterface.getName().equals("Object")) {
+					addExtend(superInterface.getSuperclass().getFullyQualifiedName());
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 				}
 			}
 		}

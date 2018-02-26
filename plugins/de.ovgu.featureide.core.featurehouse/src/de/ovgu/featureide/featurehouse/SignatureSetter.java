@@ -20,8 +20,7 @@
  */
 package de.ovgu.featureide.featurehouse;
 
-import org.eclipse.jdt.core.JavaModelException;
-
+import AST.Program;
 import de.ovgu.featureide.core.IFeatureProject;
 import de.ovgu.featureide.core.fstmodel.FSTModel;
 import de.ovgu.featureide.core.signature.ProjectSignatures;
@@ -48,8 +47,7 @@ public class SignatureSetter {
 		}
 	}
 
-//	public void setFujiParameters(IFeatureProject fp, Program ast) {
-	public void setFujiParameters(IFeatureProject fp) throws JavaModelException {
+	public void setFujiParameters(IFeatureProject fp, Program ast) {
 //		final ProjectSignatures sigs = sigCreator.createSignatures(fp, ast);
 		final ProjectSignatures sigs = FeatureHouseSignatureBuilder.build(fp);
 		synchronized (this) {

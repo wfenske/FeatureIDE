@@ -721,7 +721,7 @@ public class FeatureHouseComposer extends ComposerExtensionClass {
 			public Boolean execute(IMonitor workMonitor) throws Exception {
 				try {
 					final Program ast = runFuji(featureProject);
-//					signatureSetter.setFujiParameters(featureProject, ast);
+					signatureSetter.setFujiParameters(featureProject, ast);
 					return true;
 				} catch (final CompositionException e) {
 					FMCorePlugin.getDefault().logError(e);

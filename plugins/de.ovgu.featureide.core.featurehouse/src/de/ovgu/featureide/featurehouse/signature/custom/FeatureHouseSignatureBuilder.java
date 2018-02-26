@@ -20,7 +20,6 @@
  */
 package de.ovgu.featureide.featurehouse.signature.custom;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -31,8 +30,11 @@ import java.util.List;
 import java.util.ListIterator;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.runtime.CoreException;
+<<<<<<< HEAD
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IField;
 import org.eclipse.jdt.core.IImportDeclaration;
@@ -44,24 +46,33 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.core.ITypeParameter;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.JavaModelException;
+=======
+import org.eclipse.jdt.core.dom.AST;
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
+<<<<<<< HEAD
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
 
 import com.sun.mirror.declaration.ClassDeclaration;
 import com.sun.mirror.declaration.InterfaceDeclaration;
 
+=======
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
+
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 import de.ovgu.featureide.core.CorePlugin;
 import de.ovgu.featureide.core.IFeatureProject;
 import de.ovgu.featureide.core.signature.ProjectSignatures;
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 import de.ovgu.featureide.core.signature.base.AbstractSignature;
-import de.ovgu.featureide.core.signature.base.FOPFeatureData;
 import de.ovgu.featureide.core.signature.base.FeatureDataConstructor;
 import de.ovgu.featureide.core.signature.base.PreprocessorFeatureData;
 
@@ -89,7 +100,6 @@ public abstract class FeatureHouseSignatureBuilder {
 		return contents.toString();
 	}
 
-	@SuppressWarnings("unused")
 	private static Collection<AbstractSignature> parse(ProjectSignatures projectSignatures, ASTNode root) {
 		final HashMap<AbstractSignature, AbstractSignature> map = new HashMap<>();
 
@@ -157,6 +167,7 @@ public abstract class FeatureHouseSignatureBuilder {
 
 			@Override
 			public boolean visit(MethodDeclaration node) {
+<<<<<<< HEAD
 				System.out.println(" This is the method call at the moment: " + node.toString());
 				if (node != null) {
 
@@ -171,6 +182,14 @@ public abstract class FeatureHouseSignatureBuilder {
 //
 					attachFeatureData(methodSignature, node);
 				}
+=======
+				final int pos = unit.getLineNumber(node.getBody().getStartPosition());
+				final int end = unit.getLineNumber(node.getBody().getStartPosition() + node.getBody().getLength());
+				final FeatureHouseMethodSignature methodSignature = new FeatureHouseMethodSignature(getParent(node.getParent()), node.getName().getIdentifier(),
+						node.getModifiers(), node.getReturnType2(), node.parameters(), node.isConstructor(), pos, end);
+
+				attachFeatureData(methodSignature, node);
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 
 				if ((node.getJavadoc() == null) && (lastCommentedMethod != null) && lastCommentedMethod.getName().equals(node.getName())) {
 					curfeatureData.setComment(lastComment);
@@ -178,15 +197,21 @@ public abstract class FeatureHouseSignatureBuilder {
 					lastCommentedMethod = null;
 				}
 				return true;
-
 			}
 
 			private AbstractClassSignature getParent(ASTNode astnode) throws JavaModelException {
 				final AbstractClassSignature sig;
+<<<<<<< HEAD
 				if (astnode instanceof IType) {
 					final IType node = (IType) astnode;
 					sig = new FeatureHouseClassSignature(null, node.getElementName(), node.getFlags(), node.isInterface() ? "interface" : "class", packageName,
 							node, null);
+=======
+				if (astnode instanceof TypeDeclaration) {
+					final TypeDeclaration node = (TypeDeclaration) astnode;
+					sig = new FeatureHouseClassSignature(null, node.getName().getIdentifier(), node.getModifiers(), node.isInterface() ? "interface" : "class",
+							packageName,node,null);
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 				} else {
 					return null;
 				}
@@ -214,7 +239,7 @@ public abstract class FeatureHouseSignatureBuilder {
 			@Override
 			public boolean visit(TypeDeclaration node) {
 				final FeatureHouseClassSignature classSignature = new FeatureHouseClassSignature(getParent(node.getParent()), node.getName().getIdentifier(),
-						node.getModifiers(), node.isInterface() ? "interface" : "class", packageName, node, null);
+						node.getModifiers(), node.isInterface() ? "interface" : "class", packageName,node,null);
 
 				attachFeatureData(classSignature, node);
 
@@ -225,6 +250,7 @@ public abstract class FeatureHouseSignatureBuilder {
 		return map.keySet();
 	}
 
+<<<<<<< HEAD
 //	public static ProjectSignatures build(IFeatureProject featureProject) {
 //		final ProjectSignatures projectSignatures = new ProjectSignatures(featureProject.getFeatureModel());
 //		final ArrayList<AbstractSignature> signatureList = new ArrayList<>();
@@ -378,82 +404,39 @@ public abstract class FeatureHouseSignatureBuilder {
 							addFeatureID(new FeatureHouseFieldSignature(curClassSig, name, field.getFlags(), type), projectSignatures.getFeatureID(featurename),
 									fieldSourceRange.getOffset(), fieldSourceRange.getOffset() + fieldSourceRange.getLength());
 
+=======
+	public static ProjectSignatures build(IFeatureProject featureProject) {
+		final ProjectSignatures projectSignatures = new ProjectSignatures(featureProject.getFeatureModel());
+		final ArrayList<AbstractSignature> signatureList = new ArrayList<>();
+
+		@SuppressWarnings("deprecation")
+		final ASTParser parser = ASTParser.newParser(AST.JLS4);
+
+		final IFolder sourceFolder = featureProject.getSourceFolder();
+		try {
+			sourceFolder.accept(new IResourceVisitor() {
+
+				@Override
+				public boolean visit(IResource resource) throws CoreException {
+					if (resource instanceof IFolder) {
+						return true;
+					} else if (resource instanceof IFile) {
+						final char[] content = readFile((IFile) resource).toCharArray();
+						if (content.length > 0) {
+							parser.setSource(content);
+							signatureList.addAll(parse(projectSignatures, parser.createAST(null)));
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 						}
+					}
 
-					} while (!stack.isEmpty());
-
+					return false;
 				}
-
-			}
+			});
+		} catch (final CoreException e) {
+			CorePlugin.getDefault().logError(e);
 		}
 
-		final AbstractSignature[] sigArray = new AbstractSignature[signatureSet.size()];
-		int i = -1;
-
-		for (final SignatureReference sigRef : signatureSet.values()) {
-			final AbstractSignature sig = sigRef.getSig();
-			sig.setFeatureData(sigRef.getFeatureData());
-			sigArray[++i] = sig;
-		}
-
-		projectSignatures.setSignatureArray(sigArray);
-
+		projectSignatures.setSignatureArray(signatureList.toArray(new AbstractSignature[0]));
 		return projectSignatures;
-	}
-
-	private static java.util.List<String> featureModulePathnames = null;
-
-	private static String getFeatureName(ASTNode astNode) {
-		final int featureID = astNode.getParent().hashCode(); // not sure if this should work as feature ID but check how its actually calculated
-
-		final String featurename = featureModulePathnames.get(featureID);
-		return featurename.substring(featurename.lastIndexOf(File.separator) + 1);
-	}
-
-	private static AbstractSignature addFeatureID(AbstractSignature sig, int featureID, int startLine, int endLine) {
-		SignatureReference sigRef = signatureSet.get(sig);
-		if (sigRef == null) {
-			sigRef = new SignatureReference(sig);
-			signatureSet.put(sig, sigRef);
-			signatureTable.put(sig.getFullName(), sig);
-		}
-		sigRef.addID((FOPFeatureData) featureDataConstructor.create(featureID, startLine, endLine));
-		return sigRef.getSig();
-	}
-
-	private static final class SignatureReference {
-
-		private final HashMap<Integer, FOPFeatureData> ids = new HashMap<>();
-		private final AbstractSignature sig;
-
-		public SignatureReference(AbstractSignature sig) {
-			this.sig = sig;
-		}
-
-		public final FOPFeatureData[] getFeatureData() {
-			final FOPFeatureData[] ret = new FOPFeatureData[ids.size()];
-			int i = -1;
-			for (final FOPFeatureData id : ids.values()) {
-				ret[++i] = id;
-			}
-			return ret;
-		}
-
-		public final void addID(FOPFeatureData featureData) {
-			if (!ids.containsKey(featureData.getID())) {
-				ids.put(featureData.getID(), featureData);
-			}
-		}
-
-		public final AbstractSignature getSig() {
-			return sig;
-		}
-
-//		public void setAbsoluteFilePath(int featureID, String absoluteFilePath) {
-//			if (ids.containsKey(featureID)) {
-//				ids.get(featureID).setAbsoluteFilePath(absoluteFilePath);
-//			}
-//		}
-
 	}
 }

@@ -26,7 +26,13 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+<<<<<<< HEAD
+=======
+import org.eclipse.jdt.core.dom.Type;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 
+import com.sun.mirror.declaration.ParameterDeclaration;
 import de.ovgu.featureide.core.signature.base.AbstractClassSignature;
 import de.ovgu.featureide.core.signature.base.AbstractMethodSignature;
 
@@ -37,6 +43,7 @@ import de.ovgu.featureide.core.signature.base.AbstractMethodSignature;
 public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 
 	protected List<SingleVariableDeclaration> p = new LinkedList<>();
+<<<<<<< HEAD
 
 	protected String returnType;
 	protected List<SingleVariableDeclaration> parameterList;
@@ -44,10 +51,18 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 
 	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, String returnType, List<SingleVariableDeclaration> parameters,
 			boolean isConstructor) {
-		super(parent, name, Modifier.toString(modifiers), returnType.toString(), new LinkedList<String>(), isConstructor);
+=======
+	
+	protected TypeDeclaration returnType;
+	protected List<ParameterDeclaration> parameterList;
+//	protected List<Access> exceptionList;
 
+	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, TypeDeclaration returnType, List<ParameterDeclaration> parameters, boolean isConstructor) {
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
+		super(parent, name, Modifier.toString(modifiers), returnType.toString(), new LinkedList<String>(), isConstructor);
+		
 		this.returnType = returnType;
-		parameterList = parameters;
+		this.parameterList = parameters;
 		for (final Object parameter : parameters) {
 			final SingleVariableDeclaration parameterDeclaration = (SingleVariableDeclaration) parameter;
 			p.add(parameterDeclaration);
@@ -55,14 +70,14 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 		}
 	}
 
+<<<<<<< HEAD
 	@SuppressWarnings("unchecked")
 	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, String returnType, List<?> parameters, boolean isConstructor,
+=======
+	public FeatureHouseMethodSignature(AbstractClassSignature parent, String name, int modifiers, Type returnType, List<?> parameters, boolean isConstructor,
+>>>>>>> parent of 2434e2b54... remodifying the signature builders to use eclipse IType
 			int startLine, int endLine) {
-		super(parent, name, Modifier.toString(modifiers), null, new LinkedList<String>(), isConstructor, startLine, endLine);
-
-		this.returnType = returnType;
-		parameterList = (List<SingleVariableDeclaration>) parameters;
-
+		super(parent, name, Modifier.toString(modifiers), returnType.toString(), new LinkedList<String>(), isConstructor, startLine, endLine);
 		for (final Object parameter : parameters) {
 			final SingleVariableDeclaration parameterDeclaration = (SingleVariableDeclaration) parameter;
 			p.add(parameterDeclaration);
@@ -93,7 +108,7 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 		methodString.append(name);
 		methodString.append('(');
 		boolean notfirst = false;
-		for (final SingleVariableDeclaration parameter : parameterList) {
+		for (final ParameterDeclaration parameter : parameterList) {
 			if (notfirst) {
 				methodString.append(", ");
 			} else {
@@ -101,8 +116,7 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 			}
 			methodString.append(parameter.getType().toString());
 			methodString.append(' ');
-//			methodString.append(parameter.getSimpleName());
-			methodString.append(parameter.toString());
+			methodString.append(parameter.getSimpleName());
 		}
 		methodString.append(')');
 
@@ -116,7 +130,7 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 		hashCode = (hashCodePrime * hashCode) + type.hashCode();
 
 		hashCode = (hashCodePrime * hashCode) + (isConstructor ? 1231 : 1237);
-		for (final SingleVariableDeclaration parameter : parameterList) {
+		for (final ParameterDeclaration parameter : parameterList) {
 			hashCode = (hashCodePrime * hashCode) + parameter.getType().toString().hashCode();
 		}
 	}
@@ -143,11 +157,11 @@ public class FeatureHouseMethodSignature extends AbstractMethodSignature {
 			return false;
 		}
 
-		final Iterator<SingleVariableDeclaration> thisIt = parameterList.iterator();
-		final Iterator<SingleVariableDeclaration> otherIt = otherSig.parameterList.iterator();
+		final Iterator<ParameterDeclaration> thisIt = parameterList.iterator();
+		final Iterator<ParameterDeclaration> otherIt = otherSig.parameterList.iterator();
 		while (thisIt.hasNext()) {
-			final SingleVariableDeclaration tNext = thisIt.next();
-			final SingleVariableDeclaration oNext = otherIt.next();
+			final ParameterDeclaration tNext = thisIt.next();
+			final ParameterDeclaration oNext = otherIt.next();
 			if (!tNext.getType().equals(oNext.getType())) {
 				return false;
 			}

@@ -4,7 +4,6 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
@@ -23,81 +22,66 @@ import de.ovgu.featureide.featurehouse.refactoring.RenameMethodRefactoring;
 import de.ovgu.featureide.featurehouse.refactoring.RenameRefactoring;
 import de.ovgu.featureide.featurehouse.refactoring.RenameRefactoringWizard;
 import de.ovgu.featureide.featurehouse.refactoring.RenameTypeRefactoring;
-import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseClassSignature;
-import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseFieldSignature;
-import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseLocalVariableSignature;
-import de.ovgu.featureide.featurehouse.signature.custom.FeatureHouseMethodSignature;
+import de.ovgu.featureide.featurehouse.signature.fuji.FujiClassSignature;
+import de.ovgu.featureide.featurehouse.signature.fuji.FujiFieldSignature;
+import de.ovgu.featureide.featurehouse.signature.fuji.FujiLocalVariableSignature;
+import de.ovgu.featureide.featurehouse.signature.fuji.FujiMethodSignature;
 
 public class RenameHandler extends RefactoringHandler {
 
 	@Override
 	protected void singleAction(Object element, String file) {
 		try {
-			final IFeatureProject featureProject = getFeatureProject();
-			if (featureProject == null) {
-				return;
-			}
+			IFeatureProject featureProject = getFeatureProject();
+			if (featureProject == null) return;
 
 			RenameRefactoring refactoring;
-			if (element instanceof FeatureHouseMethodSignature) {
-				final FeatureHouseMethodSignature method = (FeatureHouseMethodSignature) element;
+			if (element instanceof FujiMethodSignature) {
+				FujiMethodSignature method = (FujiMethodSignature) element;
 
-				if (method.isConstructor()) {
-					refactoring = new RenameTypeRefactoring((FeatureHouseClassSignature) method.getParent(), featureProject, file);
-				} else {
-					refactoring = new RenameMethodRefactoring(method, featureProject, file);
-				}
-			} else if (element instanceof FeatureHouseClassSignature) {
-				refactoring = new RenameTypeRefactoring((FeatureHouseClassSignature) element, featureProject, file);
-			} else if (element instanceof FeatureHouseFieldSignature) {
-				refactoring = new RenameFieldRefactoring((FeatureHouseFieldSignature) element, featureProject, file);
-			} else if (element instanceof FeatureHouseLocalVariableSignature) {
-				refactoring = new RenameLocalVariableRefactoring((FeatureHouseLocalVariableSignature) element, featureProject, file);
-			} else {
-				return;
-			}
+				if (method.isConstructor()) refactoring = new RenameTypeRefactoring((FujiClassSignature) method.getParent(), featureProject, file);
+				else refactoring = new RenameMethodRefactoring(method, featureProject, file);
+			} else if (element instanceof FujiClassSignature) {
+				refactoring = new RenameTypeRefactoring((FujiClassSignature) element, featureProject, file);
+			} else if (element instanceof FujiFieldSignature) {
+				refactoring = new RenameFieldRefactoring((FujiFieldSignature) element, featureProject, file);
+			} else if (element instanceof FujiLocalVariableSignature) {
+				refactoring = new RenameLocalVariableRefactoring((FujiLocalVariableSignature) element, featureProject, file);
+			} else return;
 
-			final RenameRefactoringWizard refactoringWizard = new RenameRefactoringWizard(refactoring);
-			final RefactoringWizardOpenOperation op = new RefactoringWizardOpenOperation(refactoringWizard);
+			RenameRefactoringWizard refactoringWizard = new RenameRefactoringWizard(refactoring);
+			RefactoringWizardOpenOperation op = new RefactoringWizardOpenOperation(refactoringWizard);
 			op.run(getShell(), "Rename-Refactoring");
-		} catch (final InterruptedException e) {}
+		} catch (InterruptedException e) {}
 	}
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		final IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-		final ITextEditor editor = (ITextEditor) page.getActiveEditor();
+		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		ITextEditor editor = (ITextEditor) page.getActiveEditor();
 
-		final IJavaElement elem = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
+		IJavaElement elem = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
 		if (elem instanceof ICompilationUnit) {
-			final ITextSelection sel = (ITextSelection) editor.getSelectionProvider().getSelection();
+			ITextSelection sel = (ITextSelection) editor.getSelectionProvider().getSelection();
 
-			final IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
+			IDocument document = editor.getDocumentProvider().getDocument(editor.getEditorInput());
 
 			int lineOffset = 0;
 			try {
 				lineOffset = document.getLineOffset(sel.getStartLine());
-			} catch (final BadLocationException e1) {
+			} catch (BadLocationException e1) {
 				e1.printStackTrace();
 			}
-			final int column = sel.getOffset() - lineOffset;
+			int column = sel.getOffset() - lineOffset;
 
 			final String file = ((ICompilationUnit) elem).getResource().getRawLocation().toOSString();
 
-			final IFeatureProject featureProject = getFeatureProject();
+			IFeatureProject featureProject = getFeatureProject();
 			createSignatures(featureProject);
 
-			FujiSelector selector = null;
-			try {
-				selector = new FujiSelector(featureProject, file);
-			} catch (final JavaModelException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			final AbstractSignature signature = selector.getSelectedSignature(sel.getStartLine() + 1, column);
-			if (signature != null) {
-				singleAction(signature, file);
-			}
+			FujiSelector selector = new FujiSelector(featureProject, file);
+			AbstractSignature signature = selector.getSelectedSignature(sel.getStartLine() + 1, column);
+			if (signature != null) singleAction(signature, file);
 		}
 
 		return null;
