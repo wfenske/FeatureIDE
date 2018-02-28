@@ -169,7 +169,7 @@ public abstract class FeatureHouseSignatureBuilder {
 					FeatureHouseMethodSignature methodSignature = null;
 					try {
 						methodSignature = new FeatureHouseMethodSignature(getParent(node.getParent()), node.getName().toString(), node.getModifiers(),
-								node.getReturnType2().toString(), null, node.isConstructor(), pos, end);
+								node.getReturnType2().toString(), node.parameters(), node.isConstructor(), pos, end);
 					} catch (final JavaModelException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
