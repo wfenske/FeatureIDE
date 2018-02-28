@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -48,10 +49,12 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTVisitor;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.FieldDeclaration;
 import org.eclipse.jdt.core.dom.Javadoc;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.SingleVariableDeclaration;
+import org.eclipse.jdt.core.dom.VariableDeclarationFragment;
 
 import com.sun.mirror.declaration.ClassDeclaration;
 import com.sun.mirror.declaration.InterfaceDeclaration;
@@ -163,11 +166,14 @@ public abstract class FeatureHouseSignatureBuilder {
 					final int pos = unit.getLineNumber(node.getBody().getStartPosition());
 					final int end = unit.getLineNumber(node.getBody().getStartPosition() + node.getBody().getLength());
 
-					final int pos = unit.getLineNumber(node.getStartPosition());
-					final int end = unit.getLineNumber(node.getStartPosition() + node.getLength());
-
-					final FeatureHouseMethodSignature methodSignature = new FeatureHouseMethodSignature(getParent(node.getParent()),
-							node.getName().getIdentifier(), node.getModifiers(), node.getReturnType2(), node.parameters(), node.isConstructor(), pos, end);
+					FeatureHouseMethodSignature methodSignature = null;
+					try {
+						methodSignature = new FeatureHouseMethodSignature(getParent(node.getParent()), node.getName().toString(), node.getModifiers(),
+								node.getReturnType2().toString(), null, node.isConstructor(), pos, end);
+					} catch (final JavaModelException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 //
 					attachFeatureData(methodSignature, node);
 				}
@@ -202,8 +208,14 @@ public abstract class FeatureHouseSignatureBuilder {
 				for (final Iterator<?> it = node.fragments().iterator(); it.hasNext();) {
 					final VariableDeclarationFragment fragment = (VariableDeclarationFragment) it.next();
 
-					final FeatureHouseFieldSignature fieldSignature =
-						new FeatureHouseFieldSignature(getParent(node.getParent()), fragment.getName().getIdentifier(), node.getModifiers(), node.getType());
+					FeatureHouseFieldSignature fieldSignature = null;
+					try {
+						fieldSignature = new FeatureHouseFieldSignature(getParent(node.getParent()), fragment.getName().toString(), node.getModifiers(),
+								(IType) node.getType());
+					} catch (final JavaModelException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 
 					attachFeatureData(fieldSignature, node);
 				}
@@ -211,16 +223,16 @@ public abstract class FeatureHouseSignatureBuilder {
 				return true;
 			}
 
-			@Override
-			public boolean visit(TypeDeclaration node) {
-				final FeatureHouseClassSignature classSignature = new FeatureHouseClassSignature(getParent(node.getParent()), node.getName().getIdentifier(),
-						node.getModifiers(), node.isInterface() ? "interface" : "class", packageName, node, null);
-
-				attachFeatureData(classSignature, node);
-
-				return super.visit(node);
-//			}
-
+//			@Override
+//			public boolean visit(TypeDeclaration node) {
+//				final FeatureHouseClassSignature classSignature = new FeatureHouseClassSignature(getParent(node.getParent()), node.getName().getIdentifier(),
+//						node.getModifiers(), node.isInterface() ? "interface" : "class", packageName, node, null);
+//
+//				attachFeatureData(classSignature, node);
+//
+//				return super.visit(node);
+////			}
+//
 		});
 		return map.keySet();
 	}
